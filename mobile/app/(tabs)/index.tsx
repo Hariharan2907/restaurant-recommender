@@ -1,10 +1,19 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { HealthCheck } from '@/components/HealthCheck';
-import { HeroScreen } from '@/components/HeroScreen';
+import { ScreenLayout } from '@/components/ScreenLayout';
+import { Button } from '@/components/Button';
 import { FilterChips } from '@/components/FilterChips';
 import { ResultsList } from '@/components/ResultsList';
-import { colors, heroImages, space, type } from '@/lib/theme';
+import { colors, space, type } from '@/lib/theme';
 import { getDeviceLocation, type Coords } from '@/lib/location';
 import { search, type SearchResponse } from '@/lib/search';
 
@@ -41,71 +50,88 @@ export default function SearchScreen() {
     }
   };
 
+  const searchDisabled = query.trim().length === 0 || coords === null;
+
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-      <HeroScreen
-        imageUri={heroImages.search}
-        title="Find your next favorite"
-        subtitle="Personalized for your taste, mood, and history."
-        ctas={[
-          { label: loading ? 'Searching…' : 'Search', variant: 'primary', onPress: onSearch },
-          { label: 'Learn more', variant: 'secondary' },
-        ]}
-        topRight={<HealthCheck />}
+    <ScreenLayout
+      title="Find a restaurant"
+      subtitle="Personalized for your taste, mood, and history."
+      topRight={<HealthCheck />}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
       >
-        <View style={styles.inputWrap}>
-          <Text style={styles.label}>What are you craving?</Text>
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            onSubmitEditing={onSearch}
-            placeholder="cozy ramen spot near me"
-            placeholderTextColor={colors.textOnDarkFaint}
-            style={styles.input}
-            returnKeyType="search"
-            autoCapitalize="none"
-            editable={coords !== null}
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.inputSection}>
+            <Text style={styles.label}>What are you craving?</Text>
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              onSubmitEditing={onSearch}
+              placeholder="cozy ramen near me"
+              placeholderTextColor={colors.textFaint}
+              style={styles.input}
+              returnKeyType="search"
+              autoCapitalize="none"
+              editable={coords !== null}
+            />
+          </View>
+
+          <Button
+            label={loading ? 'Searching…' : 'Search'}
+            loading={loading}
+            disabled={searchDisabled}
+            onPress={onSearch}
           />
+
           {locDenied && (
             <Text style={styles.warning}>Enable location to search nearby.</Text>
           )}
           {error && <Text style={styles.error}>{error}</Text>}
-        </View>
 
-        {response && (
-          <>
-            <FilterChips filters={response.parsed_filters} />
-            <ResultsList results={response.results} />
-          </>
-        )}
-      </HeroScreen>
-    </ScrollView>
+          {response && (
+            <>
+              <FilterChips filters={response.parsed_filters} />
+              <ResultsList results={response.results} />
+            </>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  inputWrap: {
+  scrollContent: {
+    gap: space.md,
+    paddingBottom: space.lg,
+  },
+  inputSection: {
     gap: space.xs,
-    marginTop: space.sm,
   },
   label: {
-    ...type.label,
-    color: colors.textOnDarkMuted,
+    ...type.inputLabel,
+    color: colors.textMuted,
   },
   input: {
-    color: colors.textOnDark,
-    fontSize: 17,
-    fontWeight: '300',
-    paddingVertical: space.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairline,
+    ...type.input,
+    color: colors.text,
+    backgroundColor: colors.surface,
+    paddingHorizontal: space.md,
+    paddingVertical: 14,
+    borderRadius: 12,
   },
   warning: {
-    ...type.label,
-    color: colors.textOnDarkFaint,
+    ...type.body,
+    color: colors.textMuted,
   },
   error: {
-    ...type.label,
-    color: '#ff6b6b',
+    ...type.body,
+    color: colors.error,
   },
 });

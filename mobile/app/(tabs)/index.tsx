@@ -1,14 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { HealthCheck } from '@/components/HealthCheck';
 import { ScreenLayout } from '@/components/ScreenLayout';
 import { Button } from '@/components/Button';
@@ -25,6 +27,7 @@ export default function SearchScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [response, setResponse] = useState<SearchResponse | null>(null);
+  const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     (async () => {
@@ -53,6 +56,14 @@ export default function SearchScreen() {
   };
 
   const searchDisabled = query.trim().length === 0 || coords === null;
+  const showClear = query.length > 0 || response !== null;
+
+  const clearSearch = () => {
+    setQuery('');
+    setResponse(null);
+    setError(null);
+    inputRef.current?.focus();
+  };
 
   return (
     <ScreenLayout
@@ -71,17 +82,31 @@ export default function SearchScreen() {
         >
           <View style={styles.inputSection}>
             <Text style={styles.label}>What are you craving?</Text>
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              onSubmitEditing={onSearch}
-              placeholder="cozy ramen near me"
-              placeholderTextColor={colors.textFaint}
-              style={styles.input}
-              returnKeyType="search"
-              autoCapitalize="none"
-              editable={coords !== null}
-            />
+            <View style={styles.inputRow}>
+              <TextInput
+                ref={inputRef}
+                value={query}
+                onChangeText={setQuery}
+                onSubmitEditing={onSearch}
+                placeholder="cozy ramen near me"
+                placeholderTextColor={colors.textFaint}
+                style={styles.input}
+                returnKeyType="search"
+                autoCapitalize="none"
+                editable={coords !== null}
+              />
+              {showClear && (
+                <Pressable
+                  onPress={clearSearch}
+                  hitSlop={12}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear search"
+                  style={({ pressed }) => [styles.clearBtn, pressed && { opacity: 0.6 }]}
+                >
+                  <Ionicons name="close-circle" size={20} color={colors.textFaint} />
+                </Pressable>
+              )}
+            </View>
           </View>
 
           <Button
@@ -120,13 +145,22 @@ const styles = StyleSheet.create({
     ...type.inputLabel,
     color: colors.textMuted,
   },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+  },
   input: {
     ...type.input,
+    flex: 1,
     color: colors.text,
-    backgroundColor: colors.surface,
     paddingHorizontal: space.md,
     paddingVertical: 14,
-    borderRadius: 12,
+  },
+  clearBtn: {
+    paddingHorizontal: space.sm,
+    paddingVertical: space.sm,
   },
   warning: {
     ...type.body,

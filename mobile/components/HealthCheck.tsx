@@ -6,6 +6,11 @@ import { colors, type } from '@/lib/theme';
 type Status = 'loading' | 'ok' | 'error';
 
 export function HealthCheck() {
+  if (!__DEV__) return null;
+  return <HealthCheckInner />;
+}
+
+function HealthCheckInner() {
   const [status, setStatus] = useState<Status>('loading');
 
   useEffect(() => {
@@ -48,7 +53,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 999,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: colors.bg,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.hairline,
   },
@@ -59,7 +64,7 @@ const styles = StyleSheet.create({
   },
   text: {
     ...type.label,
-    color: colors.textOnDarkMuted,
+    color: colors.textMuted,
     fontSize: 10,
     letterSpacing: 1.2,
   },

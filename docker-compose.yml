@@ -3,6 +3,9 @@ name: restaurant-recommender
 services:
   postgres:
     image: pgvector/pgvector:pg16
+    # Pin to amd64: the published arm64 image has a 0-byte entrypoint script
+    # and fails with "exec format error". amd64 runs under Rosetta on Apple Silicon.
+    platform: linux/amd64
     container_name: rr-postgres
     restart: unless-stopped
     ports:

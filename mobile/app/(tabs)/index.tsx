@@ -1,51 +1,54 @@
 import { useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { HealthCheck } from '@/components/HealthCheck';
+import { HeroScreen } from '@/components/HeroScreen';
+import { colors, heroImages, space, type } from '@/lib/theme';
 
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.container}>
-        <Text style={styles.title}>Find a restaurant</Text>
+    <HeroScreen
+      imageUri={heroImages.search}
+      title="Find your next favorite"
+      subtitle="Personalized for your taste, mood, and history."
+      ctas={[
+        { label: 'Search', variant: 'primary' },
+        { label: 'Learn more', variant: 'secondary' },
+      ]}
+      topRight={<HealthCheck />}
+    >
+      <View style={styles.inputWrap}>
+        <Text style={styles.label}>What are you craving?</Text>
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="e.g. cozy ramen spot near me"
-          placeholderTextColor="#9ca3af"
+          placeholder="cozy ramen spot near me"
+          placeholderTextColor={colors.textOnDarkFaint}
           style={styles.input}
           returnKeyType="search"
+          autoCapitalize="none"
         />
-        <HealthCheck />
       </View>
-    </SafeAreaView>
+    </HeroScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: '#ffffff',
+  inputWrap: {
+    gap: space.xs,
+    marginTop: space.sm,
   },
-  container: {
-    flex: 1,
-    padding: 20,
-    gap: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#111827',
+  label: {
+    ...type.label,
+    color: colors.textOnDarkMuted,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#111827',
+    color: colors.textOnDark,
+    fontSize: 17,
+    fontWeight: '300',
+    paddingVertical: space.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.hairline,
   },
 });

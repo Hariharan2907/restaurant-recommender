@@ -1,51 +1,47 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { HeroScreen } from '@/components/HeroScreen';
+import { colors, heroImages, space, type } from '@/lib/theme';
 
 export default function ProfileScreen() {
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.container}>
-        <Text style={styles.title}>Profile</Text>
-        <View style={styles.card}>
-          <Text style={styles.label}>Signed in as</Text>
-          <Text style={styles.value}>Guest</Text>
-        </View>
+    <HeroScreen
+      imageUri={heroImages.profile}
+      title="Profile"
+      subtitle="Your taste profile gets sharper the more you visit."
+      ctas={[{ label: 'Manage account', variant: 'secondary' }]}
+    >
+      <View style={styles.row}>
+        <Text style={styles.rowLabel}>Signed in as</Text>
+        <Text style={styles.rowValue}>Guest</Text>
       </View>
-    </SafeAreaView>
+      <View style={styles.row}>
+        <Text style={styles.rowLabel}>Visits logged</Text>
+        <Text style={styles.rowValue}>0</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.rowLabel}>Taste profile</Text>
+        <Text style={styles.rowValue}>Not yet trained</Text>
+      </View>
+    </HeroScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: '#ffffff',
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    paddingVertical: space.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.hairline,
   },
-  container: {
-    flex: 1,
-    padding: 20,
-    gap: 16,
+  rowLabel: {
+    ...type.label,
+    color: colors.textOnDarkMuted,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  card: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 12,
-    padding: 16,
-    gap: 4,
-  },
-  label: {
-    fontSize: 12,
-    color: '#6b7280',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  value: {
-    fontSize: 18,
-    color: '#111827',
-    fontWeight: '600',
+  rowValue: {
+    ...type.body,
+    color: colors.textOnDark,
+    fontWeight: '500',
   },
 });

@@ -1,34 +1,36 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { HeroScreen } from '@/components/HeroScreen';
+import { colors, heroImages, space, type } from '@/lib/theme';
 
 export default function HistoryScreen() {
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.container}>
-        <Text style={styles.title}>Your visits</Text>
-        <Text style={styles.placeholder}>No visits yet</Text>
+    <HeroScreen
+      imageUri={heroImages.history}
+      title="Your visits"
+      subtitle="The places that shape your taste profile."
+    >
+      <View style={styles.empty}>
+        <Text style={styles.emptyLabel}>No visits yet</Text>
+        <Text style={styles.emptyHint}>
+          Log a visit after you eat somewhere new and it will appear here.
+        </Text>
       </View>
-    </SafeAreaView>
+    </HeroScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: '#ffffff',
+  empty: {
+    marginTop: space.lg,
+    gap: space.xs,
   },
-  container: {
-    flex: 1,
-    padding: 20,
-    gap: 16,
+  emptyLabel: {
+    ...type.label,
+    color: colors.textOnDarkMuted,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  placeholder: {
-    fontSize: 16,
-    color: '#6b7280',
+  emptyHint: {
+    ...type.body,
+    color: colors.textOnDarkMuted,
+    maxWidth: 320,
   },
 });

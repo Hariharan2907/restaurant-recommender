@@ -6,8 +6,9 @@ from typing import Any
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db import get_session
+from app.db import engine, get_session
 from app.main import app
 
 
@@ -44,3 +45,19 @@ def load_fixture():
     def _load(name: str) -> dict:
         return json.loads((FIXTURES_DIR / name).read_text())
     return _load
+
+
+@pytest_asyncio.fixture
+async def db_session() -> AsyncIterator[AsyncSession]:
+    """Per-test DB session inside a transaction that always rolls back.
+
+    Requires `make up` and `alembic upgrade head` to have been run.
+    """
+    async with engine.connect() as conn:
+        trans = await conn.begin()
+        async_session = AsyncSession(bind=conn, expire_on_commit=False)
+        try:
+            yield async_session
+        finally:
+            await async_session.close()
+            await trans.rollback()

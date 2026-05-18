@@ -18,8 +18,10 @@ export function ScreenLayout({ title, subtitle, topRight, children }: Props) {
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.root}>
       <View style={styles.header}>
         <View style={styles.brand}>
-          <Ionicons name="restaurant" size={26} color={colors.text} />
-          <Text style={styles.title}>{title}</Text>
+          <Ionicons name="restaurant" size={24} color={colors.text} />
+          <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+            {title}
+          </Text>
         </View>
         {topRight}
       </View>
@@ -40,16 +42,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: space.lg,
     paddingTop: space.md,
+    gap: space.sm,
   },
   brand: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.sm,
     flexShrink: 1,
+    minWidth: 0,
   },
   title: {
     ...type.display,
     color: colors.text,
+    flexShrink: 1,
   },
   subtitle: {
     ...type.subtitle,

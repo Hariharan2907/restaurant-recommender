@@ -21,6 +21,12 @@ class _StubSession:
     async def execute(self, *_args: Any, **_kwargs: Any) -> _StubResult:
         return _StubResult()
 
+    async def commit(self) -> None:
+        pass
+
+    async def rollback(self) -> None:
+        pass
+
 
 async def _override_get_session() -> AsyncIterator[_StubSession]:
     yield _StubSession()

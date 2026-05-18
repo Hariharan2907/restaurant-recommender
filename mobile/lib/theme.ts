@@ -1,14 +1,4 @@
 export const colors = {
-  // ---- DEPRECATED — removed in Task 14 ----
-  // Old names kept so unmigrated files still compile during the migration window.
-  // Values point at the new palette so visuals are consistent post-Task 1.
-  black: '#0a0a0a',
-  white: '#ffffff',
-  textOnDark: '#0a0a0a',
-  textOnDarkMuted: '#525252',
-  textOnDarkFaint: '#a3a3a3',
-
-  // ---- ACTIVE PALETTE ----
   // Surfaces
   bg: '#ffffff',
   surface: '#f5f5f7',
@@ -45,7 +35,6 @@ export const colors = {
 } as const;
 
 export const type = {
-  // Active scale
   display: { fontSize: 28, lineHeight: 34, fontWeight: '700' as const },
   subtitle: { fontSize: 15, lineHeight: 22, fontWeight: '400' as const },
   inputLabel: { fontSize: 13, fontWeight: '600' as const },
@@ -60,14 +49,6 @@ export const type = {
     letterSpacing: 1.4,
     textTransform: 'uppercase' as const,
   },
-
-  // ---- DEPRECATED — removed in Task 14 ----
-  cta: {
-    fontSize: 13,
-    fontWeight: '600' as const,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase' as const,
-  },
 };
 
 export const space = {
@@ -77,15 +58,4 @@ export const space = {
   lg: 24,
   xl: 40,
   xxl: 64,
-} as const;
-
-// ---- DEPRECATED — removed in Task 14 ----
-// HeroScreen and the three unmigrated screens still reference this until later tasks.
-export const heroImages = {
-  search:
-    'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1080&q=80&fit=crop&auto=format',
-  history:
-    'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1080&q=80&fit=crop&auto=format',
-  profile:
-    'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1080&q=80&fit=crop&auto=format',
 } as const;

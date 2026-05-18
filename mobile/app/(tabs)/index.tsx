@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -37,6 +38,7 @@ export default function SearchScreen() {
   const onSearch = async () => {
     if (!coords) return;
     if (query.trim().length === 0) return;
+    Keyboard.dismiss();
     setLoading(true);
     setError(null);
     try {

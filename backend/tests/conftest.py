@@ -1,6 +1,9 @@
+import json
 from collections.abc import AsyncIterator
+from pathlib import Path
 from typing import Any
 
+import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
@@ -31,3 +34,13 @@ async def client() -> AsyncIterator[AsyncClient]:
             yield c
     finally:
         app.dependency_overrides.pop(get_session, None)
+
+
+FIXTURES_DIR = Path(__file__).parent / "fixtures"
+
+
+@pytest.fixture
+def load_fixture():
+    def _load(name: str) -> dict:
+        return json.loads((FIXTURES_DIR / name).read_text())
+    return _load

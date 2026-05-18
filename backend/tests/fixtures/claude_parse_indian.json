@@ -1,0 +1,8 @@
+{
+  "cuisine": "indian",
+  "min_rating": 4.0,
+  "vibe_tags": ["cozy"],
+  "dietary": ["vegetarian"],
+  "price_max": 2,
+  "intent": "eat-now"
+}

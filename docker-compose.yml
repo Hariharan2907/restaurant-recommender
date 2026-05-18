@@ -1,0 +1,71 @@
+name: restaurant-recommender
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    # Pin to amd64: the published arm64 image has a 0-byte entrypoint script
+    # and fails with "exec format error". amd64 runs under Rosetta on Apple Silicon.
+    platform: linux/amd64
+    container_name: rr-postgres
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: restaurant_recommender
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d restaurant_recommender"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: rr-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  backend:
+    build: ./backend
+    container_name: rr-backend
+    profiles: ["full"]
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      # Override .env hostnames (which target localhost for native dev)
+      # so the in-container backend can reach the compose services.
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/restaurant_recommender
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      # Anonymous volume to avoid clobbering an in-image .venv (if the
+      # backend Dockerfile creates one). Harmless if not used.
+      - /app/.venv
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+volumes:
+  pgdata:
+  redisdata:

@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.db import engine, get_session
 from app.main import app
@@ -55,7 +55,8 @@ async def db_session() -> AsyncIterator[AsyncSession]:
     """
     async with engine.connect() as conn:
         trans = await conn.begin()
-        async_session = AsyncSession(bind=conn, expire_on_commit=False)
+        session_factory = async_sessionmaker(conn, expire_on_commit=False)
+        async_session = session_factory()
         try:
             yield async_session
         finally:

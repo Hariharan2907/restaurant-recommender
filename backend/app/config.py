@@ -20,6 +20,16 @@ class Settings(BaseSettings):
     anthropic_api_key: str = Field(default="")
     google_places_api_key: str = Field(default="")
     yelp_api_key: str = Field(default="")
+
+    anthropic_model: str = Field(default="claude-3-5-haiku-20241022")
+    google_places_url: str = Field(
+        default="https://places.googleapis.com/v1/places:searchText"
+    )
+    anthropic_timeout_s: float = Field(default=3.0)
+    google_places_timeout_s: float = Field(default=5.0)
+    search_cache_ttl_s: int = Field(default=600)        # 10 min
+    places_cache_ttl_s: int = Field(default=604800)     # 7 days
+
     supabase_url: str = Field(default="")
     supabase_anon_key: str = Field(default="")
 

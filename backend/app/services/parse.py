@@ -21,6 +21,15 @@ Return ONLY a JSON object with these keys (omit any that don't apply, do not inv
 Reply with the JSON only, no prose, no markdown fences."""
 
 
+def _strip_markdown_fences(text: str) -> str:
+    s = text.strip()
+    if s.startswith("```"):
+        s = s.split("\n", 1)[1] if "\n" in s else s[3:]
+    if s.endswith("```"):
+        s = s[:-3].rstrip()
+    return s
+
+
 async def parse_query(query: str) -> ParsedFilters:
     client = get_anthropic_client()
     if client is None:
@@ -43,7 +52,7 @@ async def parse_query(query: str) -> ParsedFilters:
     latency_ms = int((time.perf_counter() - started) * 1000)
     raw = response.content[0].text if response.content else ""
     try:
-        data = json.loads(raw)
+        data = json.loads(_strip_markdown_fences(raw))
         parsed = ParsedFilters.model_validate(data)
     except Exception as exc:  # noqa: BLE001 — soft-fail on bad LLM output
         logger.warning("parse_query: invalid JSON from model (%s): %r", exc, raw[:200])

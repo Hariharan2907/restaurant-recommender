@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     google_places_api_key: str = Field(default="")
     yelp_api_key: str = Field(default="")
 
-    anthropic_model: str = Field(default="claude-3-5-haiku-20241022")
+    anthropic_model: str = Field(default="claude-haiku-4-5-20251001")
     google_places_url: str = Field(
         default="https://places.googleapis.com/v1/places:searchText"
     )

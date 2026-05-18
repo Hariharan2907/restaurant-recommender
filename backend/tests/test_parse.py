@@ -57,3 +57,29 @@ async def test_parse_query_returns_empty_on_api_exception(monkeypatch):
 
     result = await parse_query("anything")
     assert result == ParsedFilters()
+
+
+@pytest.mark.asyncio
+async def test_parse_query_strips_markdown_fences(monkeypatch):
+    fenced = '```json\n{"cuisine": "ramen", "min_rating": 4.0, "vibe_tags": ["cozy"]}\n```'
+    mock_client = SimpleNamespace(
+        messages=SimpleNamespace(create=AsyncMock(return_value=_make_anthropic_response(fenced)))
+    )
+    monkeypatch.setattr("app.services.parse.get_anthropic_client", lambda: mock_client)
+
+    result = await parse_query("cozy ramen 4 stars")
+    assert result.cuisine == "ramen"
+    assert result.min_rating == 4.0
+    assert result.vibe_tags == ["cozy"]
+
+
+@pytest.mark.asyncio
+async def test_parse_query_strips_plain_triple_backtick_fences(monkeypatch):
+    fenced = '```\n{"cuisine": "thai"}\n```'
+    mock_client = SimpleNamespace(
+        messages=SimpleNamespace(create=AsyncMock(return_value=_make_anthropic_response(fenced)))
+    )
+    monkeypatch.setattr("app.services.parse.get_anthropic_client", lambda: mock_client)
+
+    result = await parse_query("thai")
+    assert result.cuisine == "thai"

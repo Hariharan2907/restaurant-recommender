@@ -16,15 +16,11 @@ const TAB_BAR_HEIGHT = Platform.select({ ios: 84, default: 68 }) ?? 68;
 export function ScreenLayout({ title, subtitle, topRight, children }: Props) {
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.root}>
-      <View style={styles.header}>
-        <View style={styles.brand}>
-          <Ionicons name="restaurant" size={24} color={colors.text} />
-          <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
-            {title}
-          </Text>
-        </View>
+      <View style={styles.chrome}>
+        <Ionicons name="restaurant" size={22} color={colors.accent} />
         {topRight}
       </View>
+      <Text style={styles.title}>{title}</Text>
       {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
       <View style={styles.content}>{children}</View>
     </SafeAreaView>
@@ -36,24 +32,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bg,
   },
-  header: {
+  chrome: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: space.lg,
     paddingTop: space.md,
-    gap: space.sm,
-  },
-  brand: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.sm,
-    minWidth: 0,
+    minHeight: 28,
   },
   title: {
     ...type.display,
     color: colors.text,
-    flex: 1,
+    paddingHorizontal: space.lg,
+    marginTop: space.sm,
   },
   subtitle: {
     ...type.subtitle,

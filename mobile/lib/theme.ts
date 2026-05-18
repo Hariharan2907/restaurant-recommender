@@ -12,8 +12,12 @@ export const colors = {
   // Lines
   hairline: '#e5e5e5',
 
+  // Brand accent (warm orange)
+  accent: '#f97316',
+  accentPressed: '#ea580c',
+
   // Buttons
-  primaryBg: '#0a0a0a',
+  primaryBg: '#f97316',
   primaryText: '#ffffff',
   primaryBgDisabled: '#e5e5e5',
   primaryTextDisabled: '#a3a3a3',

@@ -1,12 +1,18 @@
 {
   "expo": {
-    "name": "Restaurant Recommender",
-    "slug": "restaurant-recommender",
-    "scheme": "restaurantrecommender",
+    "name": "Fork",
+    "slug": "fork",
+    "scheme": "fork",
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.restaurantrecommender.app"

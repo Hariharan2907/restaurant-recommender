@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, space, type } from '@/lib/theme';
 
 type Props = {
@@ -16,7 +17,10 @@ export function ScreenLayout({ title, subtitle, topRight, children }: Props) {
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.root}>
       <View style={styles.header}>
-        <Text style={styles.title}>{title}</Text>
+        <View style={styles.brand}>
+          <Ionicons name="restaurant" size={26} color={colors.text} />
+          <Text style={styles.title}>{title}</Text>
+        </View>
         {topRight}
       </View>
       {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
@@ -36,6 +40,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: space.lg,
     paddingTop: space.md,
+  },
+  brand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    flexShrink: 1,
   },
   title: {
     ...type.display,

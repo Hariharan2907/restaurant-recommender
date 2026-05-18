@@ -9,6 +9,7 @@ from app.cache import get_redis, search_key
 from app.config import get_settings
 from app.db import get_session
 from app.schemas.search import SearchRequest, SearchResponse
+from app.services.explain import explain_results
 from app.services.filters import apply_filters
 from app.services.parse import parse_query
 from app.services.places import find_places
@@ -43,6 +44,8 @@ async def search(
         raise HTTPException(status_code=502, detail="places_error") from exc
 
     filtered = apply_filters(candidates, parsed)
+
+    await explain_results(req.query, parsed, filtered)
 
     try:
         await upsert_many(session, filtered)

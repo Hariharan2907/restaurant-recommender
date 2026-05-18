@@ -26,6 +26,7 @@ type ParamShape = {
   cuisine: string;
   address: string;
   photoRefs: string;
+  explanation: string;
 };
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -41,6 +42,7 @@ export default function RestaurantDetail() {
   const priceTier = params.priceTier ? Number(params.priceTier) : null;
   const cuisine = params.cuisine || null;
   const address = params.address || null;
+  const explanation = params.explanation || null;
 
   const photoRefs = useMemo<string[]>(() => {
     try {
@@ -117,6 +119,13 @@ export default function RestaurantDetail() {
 
           {address && <Text style={styles.address}>{address}</Text>}
 
+          {explanation && (
+            <View style={styles.reasonBox}>
+              <Text style={styles.reasonLabel}>Why it matches</Text>
+              <Text style={styles.reasonText}>{explanation}</Text>
+            </View>
+          )}
+
           <View style={styles.actions}>
             <Button label="Open in Google Maps" onPress={openInMaps} />
           </View>
@@ -183,6 +192,23 @@ const styles = StyleSheet.create({
   address: {
     ...type.body,
     color: colors.textMuted,
+  },
+  reasonBox: {
+    marginTop: space.sm,
+    padding: space.md,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.accent,
+    gap: space.xs,
+  },
+  reasonLabel: {
+    ...type.label,
+    color: colors.accent,
+  },
+  reasonText: {
+    ...type.body,
+    color: colors.text,
   },
   actions: {
     marginTop: space.md,

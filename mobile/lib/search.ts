@@ -22,6 +22,7 @@ export type RestaurantResult = {
   address: string | null;
   photo_refs: string[];
   distance_m: number | null;
+  explanation: string | null;
 };
 
 export type SearchResponse = {

@@ -41,6 +41,7 @@ function openDetail(item: RestaurantResult) {
       cuisine: item.cuisine ?? '',
       address: item.address ?? '',
       photoRefs: JSON.stringify(item.photo_refs ?? []),
+      explanation: item.explanation ?? '',
     },
   });
 }
@@ -70,6 +71,7 @@ function Card({ item }: { item: RestaurantResult }) {
           {item.cuisine && <Text style={styles.meta}>{item.cuisine}</Text>}
         </View>
         {item.address && <Text style={styles.address}>{item.address}</Text>}
+        {item.explanation && <Text style={styles.reason}>{item.explanation}</Text>}
       </View>
       <Ionicons name="chevron-forward" size={18} color={colors.textFaint} />
     </Pressable>
@@ -119,6 +121,13 @@ const styles = StyleSheet.create({
     ...type.meta,
     color: colors.textFaint,
     marginTop: 4,
+  },
+  reason: {
+    ...type.body,
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.accent,
+    marginTop: 6,
   },
   emptyWrap: {
     marginTop: space.lg,

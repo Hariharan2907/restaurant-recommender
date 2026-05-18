@@ -29,6 +29,7 @@ class RestaurantResult(BaseModel):
     address: str | None = None
     photo_refs: list[str] = Field(default_factory=list)
     distance_m: int | None = None
+    explanation: str | None = None
 
 
 class SearchResponse(BaseModel):

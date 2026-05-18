@@ -34,12 +34,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.sm,
     paddingVertical: 4,
     borderRadius: 999,
-    backgroundColor: (colors as any).chipBg ?? 'rgba(255,255,255,0.08)',
+    backgroundColor: colors.surfaceAlt,
     borderWidth: 1,
     borderColor: colors.hairline,
   },
   chipText: {
-    ...type.label,
-    color: colors.textOnDark,
+    ...type.meta,
+    color: colors.text,
   },
 });

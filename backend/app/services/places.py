@@ -15,8 +15,12 @@ _FIELD_MASK = ",".join([
     "places.formattedAddress",
     "places.location",
     "places.rating",
+    "places.userRatingCount",
     "places.priceLevel",
+    "places.photos",
 ])
+
+_MAX_PHOTOS = 5
 
 _PRICE_LEVEL_MAP = {
     "PRICE_LEVEL_FREE": 1,
@@ -35,16 +39,18 @@ def _parse_place(raw: dict, cuisine_hint: str | None) -> RestaurantResult | None
     lng = loc.get("longitude")
     if not (place_id and name and lat is not None and lng is not None):
         return None
+    photo_refs = [p["name"] for p in (raw.get("photos") or [])[:_MAX_PHOTOS] if p.get("name")]
     return RestaurantResult(
         google_place_id=place_id,
         name=name,
         cuisine=cuisine_hint,
         rating=raw.get("rating"),
+        user_ratings_total=raw.get("userRatingCount"),
         price_tier=_PRICE_LEVEL_MAP.get(raw.get("priceLevel", "")),
         lat=lat,
         lng=lng,
         address=raw.get("formattedAddress"),
-        photo_url=None,
+        photo_refs=photo_refs,
     )
 
 

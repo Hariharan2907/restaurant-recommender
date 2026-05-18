@@ -15,11 +15,12 @@ export type RestaurantResult = {
   name: string;
   cuisine: string | null;
   rating: number | null;
+  user_ratings_total: number | null;
   price_tier: number | null;
   lat: number;
   lng: number;
   address: string | null;
-  photo_url: string | null;
+  photo_refs: string[];
   distance_m: number | null;
 };
 

@@ -22,11 +22,12 @@ class RestaurantResult(BaseModel):
     name: str
     cuisine: str | None = None
     rating: float | None = None
+    user_ratings_total: int | None = None
     price_tier: int | None = None
     lat: float
     lng: float
     address: str | None = None
-    photo_url: str | None = None
+    photo_refs: list[str] = Field(default_factory=list)
     distance_m: int | None = None
 
 

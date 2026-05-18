@@ -1,5 +1,6 @@
-import { FlatList, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { colors, space, type } from '@/lib/theme';
 import type { RestaurantResult } from '@/lib/search';
 
@@ -23,25 +24,46 @@ export function ResultsList({ results }: { results: RestaurantResult[] }) {
   );
 }
 
-function openInMaps(item: RestaurantResult) {
-  const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    item.name,
-  )}&query_place_id=${encodeURIComponent(item.google_place_id)}`;
-  void Linking.openURL(url);
+function formatRatingCount(n: number): string {
+  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k`;
+  return n.toString();
+}
+
+function openDetail(item: RestaurantResult) {
+  router.push({
+    pathname: '/restaurant/[placeId]',
+    params: {
+      placeId: item.google_place_id,
+      name: item.name,
+      rating: item.rating ?? '',
+      userRatingsTotal: item.user_ratings_total ?? '',
+      priceTier: item.price_tier ?? '',
+      cuisine: item.cuisine ?? '',
+      address: item.address ?? '',
+      photoRefs: JSON.stringify(item.photo_refs ?? []),
+    },
+  });
 }
 
 function Card({ item }: { item: RestaurantResult }) {
   return (
     <Pressable
-      onPress={() => openInMaps(item)}
+      onPress={() => openDetail(item)}
       accessibilityRole="button"
-      accessibilityLabel={`Open ${item.name} in Maps`}
+      accessibilityLabel={`Open ${item.name} details`}
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
     >
       <View style={styles.cardBody}>
         <Text style={styles.name}>{item.name}</Text>
         <View style={styles.metaRow}>
-          {item.rating != null && <Text style={styles.meta}>{item.rating.toFixed(1)}★</Text>}
+          {item.rating != null && (
+            <Text style={styles.meta}>
+              {item.rating.toFixed(1)}★
+              {item.user_ratings_total != null && (
+                <Text style={styles.metaFaint}> ({formatRatingCount(item.user_ratings_total)})</Text>
+              )}
+            </Text>
+          )}
           {item.price_tier != null && (
             <Text style={styles.meta}>{'$'.repeat(item.price_tier)}</Text>
           )}
@@ -87,6 +109,11 @@ const styles = StyleSheet.create({
   meta: {
     ...type.meta,
     color: colors.textMuted,
+  },
+  metaFaint: {
+    ...type.meta,
+    color: colors.textFaint,
+    fontWeight: '400',
   },
   address: {
     ...type.meta,

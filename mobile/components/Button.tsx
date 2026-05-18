@@ -35,7 +35,7 @@ export function Button({
         {loading && (
           <ActivityIndicator
             size="small"
-            color={isSecondary ? colors.text : colors.primaryText}
+            color={isSecondary ? colors.secondaryText : colors.primaryText}
             style={styles.spinner}
           />
         )}

@@ -46,14 +46,13 @@ const styles = StyleSheet.create({
   card: {
     padding: space.md,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: colors.surfaceAlt,
     borderWidth: 1,
     borderColor: colors.hairline,
   },
   name: {
-    ...type.body,
-    color: colors.textOnDark,
-    fontWeight: '600' as const,
+    ...type.name,
+    color: colors.text,
   },
   metaRow: {
     flexDirection: 'row',
@@ -61,12 +60,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   meta: {
-    ...type.label,
-    color: colors.textOnDarkMuted,
+    ...type.meta,
+    color: colors.textMuted,
   },
   address: {
-    ...type.label,
-    color: colors.textOnDarkFaint,
+    ...type.meta,
+    color: colors.textFaint,
     marginTop: 4,
   },
   emptyWrap: {
@@ -74,7 +73,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    ...type.label,
-    color: colors.textOnDarkMuted,
+    ...type.body,
+    color: colors.textMuted,
   },
 });

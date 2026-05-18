@@ -39,22 +39,21 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: space.lg,
     paddingTop: space.md,
     gap: space.sm,
   },
   brand: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.sm,
-    flexShrink: 1,
     minWidth: 0,
   },
   title: {
     ...type.display,
     color: colors.text,
-    flexShrink: 1,
+    flex: 1,
   },
   subtitle: {
     ...type.subtitle,

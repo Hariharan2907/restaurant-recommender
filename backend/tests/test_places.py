@@ -1,3 +1,5 @@
+import json
+
 import pytest
 import respx
 import httpx
@@ -32,6 +34,26 @@ async def test_find_places_calls_google_on_cache_miss(monkeypatch, fake_redis, l
     assert results[0].name == "Curry House"
     assert results[0].rating == 4.4
     assert results[0].price_tier == 2  # MODERATE → 2
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_find_places_restricts_search_to_restaurants(monkeypatch, fake_redis, load_fixture):
+    # Regression: a bare cuisine like "indian" used to match the COUNTRY "India" because
+    # the request put no type restriction on searchText (locationBias is only a soft hint).
+    # The request must pin results to restaurants so geography can't outrank eateries.
+    monkeypatch.setattr("app.services.places.get_redis", lambda: fake_redis)
+    monkeypatch.setattr("app.services.places.get_settings", lambda: _settings_with_key("places-key"))
+
+    body = load_fixture("places_indian_sf.json")
+    route = respx.post("https://places.googleapis.com/v1/places:searchText").mock(
+        return_value=httpx.Response(200, json=body)
+    )
+
+    await find_places("indian", 37.785, -122.409, 3000)
+
+    sent = json.loads(route.calls.last.request.content)
+    assert sent.get("includedType") == "restaurant"
 
 
 @pytest.mark.asyncio

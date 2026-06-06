@@ -81,6 +81,11 @@ async def find_places(
     }
     body = {
         "textQuery": text_query,
+        # Pin results to restaurants. Without this, a bare cuisine term like "indian"
+        # matches the COUNTRY "India" (locationBias is only a soft hint, so a strong
+        # textual match to geography outranks nearby eateries). This restriction also
+        # covers every other cuisine that collides with a place name (italian→Italy, etc.).
+        "includedType": "restaurant",
         "locationBias": {
             "circle": {
                 "center": {"latitude": lat, "longitude": lng},

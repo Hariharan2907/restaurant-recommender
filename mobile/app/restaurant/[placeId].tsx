@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -14,6 +14,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Button } from '@/components/Button';
+import { useAuth } from '@/lib/auth';
+import { getDishes, type Dish } from '@/lib/recommendations';
 import { colors, space, type } from '@/lib/theme';
 import { photoUrl } from '@/lib/photos';
 
@@ -25,6 +27,8 @@ type ParamShape = {
   priceTier: string;
   cuisine: string;
   address: string;
+  lat: string;
+  lng: string;
   photoRefs: string;
   explanation: string;
 };
@@ -34,6 +38,8 @@ const PHOTO_HEIGHT = 240;
 
 export default function RestaurantDetail() {
   const params = useLocalSearchParams<ParamShape>();
+  const { session } = useAuth();
+  const [dishes, setDishes] = useState<Dish[]>([]);
 
   const name = params.name ?? '';
   const placeId = params.placeId ?? '';
@@ -52,6 +58,38 @@ export default function RestaurantDetail() {
       return [];
     }
   }, [params.photoRefs]);
+
+  useEffect(() => {
+    if (!placeId) return;
+    let cancelled = false;
+    getDishes(placeId)
+      .then((r) => {
+        if (!cancelled) setDishes(r.dishes);
+      })
+      .catch(() => {
+        // dishes are progressive enhancement — ignore failures
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [placeId]);
+
+  const onLogVisit = () => {
+    if (!session) {
+      router.push('/auth/sign-in');
+      return;
+    }
+    router.push({
+      pathname: '/log-visit',
+      params: {
+        placeId,
+        name,
+        lat: params.lat ?? '',
+        lng: params.lng ?? '',
+        cuisine: params.cuisine ?? '',
+      },
+    });
+  };
 
   const openInMaps = () => {
     const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
@@ -126,8 +164,31 @@ export default function RestaurantDetail() {
             </View>
           )}
 
+          {dishes.length > 0 && (
+            <View style={styles.dishesBox}>
+              <Text style={styles.dishesLabel}>Popular dishes</Text>
+              {dishes.slice(0, 6).map((dish) => (
+                <View key={dish.dish_name} style={styles.dishRow}>
+                  <Text style={styles.dishName}>{dish.dish_name}</Text>
+                  <Text style={styles.dishMeta}>
+                    {dish.mention_count} mention
+                    {dish.mention_count === 1 ? '' : 's'}
+                  </Text>
+                </View>
+              ))}
+              <Text style={styles.attribution}>
+                Dish data derived from Google and Yelp reviews.
+              </Text>
+            </View>
+          )}
+
           <View style={styles.actions}>
-            <Button label="Open in Google Maps" onPress={openInMaps} />
+            <Button label="Log a visit" onPress={onLogVisit} />
+            <Button
+              label="Open in Google Maps"
+              variant="secondary"
+              onPress={openInMaps}
+            />
           </View>
         </View>
       </ScrollView>
@@ -212,5 +273,40 @@ const styles = StyleSheet.create({
   },
   actions: {
     marginTop: space.md,
+    gap: space.sm,
+  },
+  dishesBox: {
+    marginTop: space.sm,
+    padding: space.md,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    gap: space.xs,
+  },
+  dishesLabel: {
+    ...type.label,
+    color: colors.textMuted,
+  },
+  dishRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    paddingVertical: 4,
+  },
+  dishName: {
+    ...type.body,
+    color: colors.text,
+    fontWeight: '500',
+  },
+  dishMeta: {
+    ...type.meta,
+    color: colors.textFaint,
+    fontWeight: '400',
+  },
+  attribution: {
+    ...type.meta,
+    fontSize: 11,
+    color: colors.textFaint,
+    fontWeight: '400',
+    marginTop: space.xs,
   },
 });

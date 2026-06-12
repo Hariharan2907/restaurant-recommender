@@ -38,6 +38,41 @@ def places_key(text_query: str, lat: float, lng: float, radius_m: int) -> str:
     return f"places:{digest}"
 
 
+def recs_key(
+    user_part: str,
+    query: str,
+    lat: float,
+    lng: float,
+    radius_m: int,
+    mood: str | None,
+) -> str:
+    normalized = query.strip().lower()
+    digest = _hash([
+        user_part,
+        normalized,
+        f"{quantize_coord(lat)}",
+        f"{quantize_coord(lng)}",
+        str(radius_m),
+        (mood or "").strip().lower(),
+    ])
+    return f"recs:{digest}"
+
+
+def _user_version_key(user_id: str) -> str:
+    return f"recsver:{user_id}"
+
+
+async def get_user_cache_version(redis: "redis_asyncio.Redis", user_id: str) -> str:
+    """Per-user cache generation. Bumped on new visits so stale personalized
+    responses die without scanning for their keys."""
+    version = await redis.get(_user_version_key(user_id))
+    return version or "0"
+
+
+async def bump_user_cache_version(redis: "redis_asyncio.Redis", user_id: str) -> None:
+    await redis.incr(_user_version_key(user_id))
+
+
 @lru_cache(maxsize=1)
 def get_redis() -> redis_asyncio.Redis:
     settings = get_settings()

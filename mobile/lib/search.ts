@@ -1,4 +1,4 @@
-import { API_BASE } from './api';
+import { apiJson } from './api';
 import type { Coords } from './location';
 
 export type ParsedFilters = {
@@ -23,6 +23,8 @@ export type RestaurantResult = {
   photo_refs: string[];
   distance_m: number | null;
   explanation: string | null;
+  /** Present on /recommendations and /discover results. */
+  popular_dishes?: string[];
 };
 
 export type SearchResponse = {
@@ -32,13 +34,7 @@ export type SearchResponse = {
 };
 
 export async function search(query: string, loc: Coords): Promise<SearchResponse> {
-  const res = await fetch(`${API_BASE}/search`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query, lat: loc.lat, lng: loc.lng }),
-  });
-  if (!res.ok) {
-    throw new Error(`Search failed (${res.status})`);
-  }
-  return res.json();
+  // apiJson attaches the Supabase bearer token when signed in, which lets the
+  // backend reorder results against the user's taste profile.
+  return apiJson('/search', 'POST', { query, lat: loc.lat, lng: loc.lng });
 }

@@ -40,6 +40,8 @@ function openDetail(item: RestaurantResult) {
       priceTier: item.price_tier ?? '',
       cuisine: item.cuisine ?? '',
       address: item.address ?? '',
+      lat: item.lat,
+      lng: item.lng,
       photoRefs: JSON.stringify(item.photo_refs ?? []),
       explanation: item.explanation ?? '',
     },
@@ -71,6 +73,11 @@ function Card({ item }: { item: RestaurantResult }) {
           {item.cuisine && <Text style={styles.meta}>{item.cuisine}</Text>}
         </View>
         {item.address && <Text style={styles.address}>{item.address}</Text>}
+        {item.popular_dishes && item.popular_dishes.length > 0 && (
+          <Text style={styles.dishes}>
+            Known for: {item.popular_dishes.slice(0, 3).join(', ')}
+          </Text>
+        )}
         {item.explanation && <Text style={styles.reason}>{item.explanation}</Text>}
       </View>
       <Ionicons name="chevron-forward" size={18} color={colors.textFaint} />
@@ -120,6 +127,12 @@ const styles = StyleSheet.create({
   address: {
     ...type.meta,
     color: colors.textFaint,
+    marginTop: 4,
+  },
+  dishes: {
+    ...type.meta,
+    color: colors.textMuted,
+    fontWeight: '400',
     marginTop: 4,
   },
   reason: {

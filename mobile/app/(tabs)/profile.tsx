@@ -1,32 +1,39 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { HeroScreen } from '@/components/HeroScreen';
-import { colors, heroImages, space, type } from '@/lib/theme';
+import { ScreenLayout } from '@/components/ScreenLayout';
+import { Button } from '@/components/Button';
+import { colors, space, type } from '@/lib/theme';
 
 export default function ProfileScreen() {
   return (
-    <HeroScreen
-      imageUri={heroImages.profile}
+    <ScreenLayout
       title="Profile"
       subtitle="Your taste profile gets sharper the more you visit."
-      ctas={[{ label: 'Manage account', variant: 'secondary' }]}
     >
-      <View style={styles.row}>
-        <Text style={styles.rowLabel}>Signed in as</Text>
-        <Text style={styles.rowValue}>Guest</Text>
+      <View style={styles.rows}>
+        <InfoRow label="Signed in as" value="Guest" />
+        <InfoRow label="Visits logged" value="0" />
+        <InfoRow label="Taste profile" value="Not yet trained" />
       </View>
-      <View style={styles.row}>
-        <Text style={styles.rowLabel}>Visits logged</Text>
-        <Text style={styles.rowValue}>0</Text>
+      <View style={styles.buttonWrap}>
+        <Button label="Manage account" variant="secondary" />
       </View>
-      <View style={styles.row}>
-        <Text style={styles.rowLabel}>Taste profile</Text>
-        <Text style={styles.rowValue}>Not yet trained</Text>
-      </View>
-    </HeroScreen>
+    </ScreenLayout>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.row}>
+      <Text style={styles.rowLabel}>{label}</Text>
+      <Text style={styles.rowValue}>{value}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  rows: {
+    marginTop: space.lg,
+  },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -37,11 +44,14 @@ const styles = StyleSheet.create({
   },
   rowLabel: {
     ...type.label,
-    color: colors.textOnDarkMuted,
+    color: colors.textMuted,
   },
   rowValue: {
     ...type.body,
-    color: colors.textOnDark,
+    color: colors.text,
     fontWeight: '500',
+  },
+  buttonWrap: {
+    marginTop: space.lg,
   },
 });

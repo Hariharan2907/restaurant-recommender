@@ -1,10 +1,14 @@
+import json
 from collections.abc import AsyncIterator
+from pathlib import Path
 from typing import Any
 
+import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.db import get_session
+from app.db import engine, get_session
 from app.main import app
 
 
@@ -16,6 +20,12 @@ class _StubResult:
 class _StubSession:
     async def execute(self, *_args: Any, **_kwargs: Any) -> _StubResult:
         return _StubResult()
+
+    async def commit(self) -> None:
+        pass
+
+    async def rollback(self) -> None:
+        pass
 
 
 async def _override_get_session() -> AsyncIterator[_StubSession]:
@@ -31,3 +41,30 @@ async def client() -> AsyncIterator[AsyncClient]:
             yield c
     finally:
         app.dependency_overrides.pop(get_session, None)
+
+
+FIXTURES_DIR = Path(__file__).parent / "fixtures"
+
+
+@pytest.fixture
+def load_fixture():
+    def _load(name: str) -> dict:
+        return json.loads((FIXTURES_DIR / name).read_text())
+    return _load
+
+
+@pytest_asyncio.fixture
+async def db_session() -> AsyncIterator[AsyncSession]:
+    """Per-test DB session inside a transaction that always rolls back.
+
+    Requires `make up` and `alembic upgrade head` to have been run.
+    """
+    async with engine.connect() as conn:
+        trans = await conn.begin()
+        session_factory = async_sessionmaker(conn, expire_on_commit=False)
+        async_session = session_factory()
+        try:
+            yield async_session
+        finally:
+            await async_session.close()
+            await trans.rollback()

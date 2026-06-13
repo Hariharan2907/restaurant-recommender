@@ -1,36 +1,38 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { HeroScreen } from '@/components/HeroScreen';
-import { colors, heroImages, space, type } from '@/lib/theme';
+import { ScreenLayout } from '@/components/ScreenLayout';
+import { colors, space, type } from '@/lib/theme';
 
 export default function HistoryScreen() {
   return (
-    <HeroScreen
-      imageUri={heroImages.history}
+    <ScreenLayout
       title="Your visits"
       subtitle="The places that shape your taste profile."
     >
       <View style={styles.empty}>
-        <Text style={styles.emptyLabel}>No visits yet</Text>
-        <Text style={styles.emptyHint}>
+        <Text style={styles.headline}>No visits yet</Text>
+        <Text style={styles.body}>
           Log a visit after you eat somewhere new and it will appear here.
         </Text>
       </View>
-    </HeroScreen>
+    </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
   empty: {
-    marginTop: space.lg,
+    marginTop: space.xl,
     gap: space.xs,
+    alignItems: 'center',
   },
-  emptyLabel: {
-    ...type.label,
-    color: colors.textOnDarkMuted,
-  },
-  emptyHint: {
+  headline: {
     ...type.body,
-    color: colors.textOnDarkMuted,
+    color: colors.text,
+    fontWeight: '600',
+  },
+  body: {
+    ...type.body,
+    color: colors.textMuted,
     maxWidth: 320,
+    textAlign: 'center',
   },
 });

@@ -1,4 +1,10 @@
-.PHONY: up up-full down logs psql redis-cli reset-db
+.PHONY: dev up up-full down logs psql redis-cli reset-db
+
+# One command for local development:
+# Postgres + Redis -> migrations -> backend API -> Expo on the iOS simulator.
+# Ctrl-C stops the API it started; data services stay up (use `make down` to stop them).
+dev:
+	@bash scripts/dev.sh
 
 # Bring up data services only (Postgres + Redis). Backend runs natively on host.
 up:

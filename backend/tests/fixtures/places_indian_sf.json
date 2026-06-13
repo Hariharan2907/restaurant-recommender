@@ -1,0 +1,20 @@
+{
+  "places": [
+    {
+      "id": "ChIJplaceA",
+      "displayName": {"text": "Curry House", "languageCode": "en"},
+      "formattedAddress": "123 Mission St, San Francisco, CA",
+      "location": {"latitude": 37.7849, "longitude": -122.4094},
+      "rating": 4.4,
+      "priceLevel": "PRICE_LEVEL_MODERATE"
+    },
+    {
+      "id": "ChIJplaceB",
+      "displayName": {"text": "Tandoor Lounge", "languageCode": "en"},
+      "formattedAddress": "456 Market St, San Francisco, CA",
+      "location": {"latitude": 37.7900, "longitude": -122.4000},
+      "rating": 4.6,
+      "priceLevel": "PRICE_LEVEL_EXPENSIVE"
+    }
+  ]
+}

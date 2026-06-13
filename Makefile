@@ -1,4 +1,4 @@
-.PHONY: dev up up-full down logs psql redis-cli reset-db
+.PHONY: dev up up-full down logs psql redis-cli reset-db worker backfill
 
 # One command for local development:
 # Postgres + Redis -> migrations -> backend API -> Expo on the iOS simulator.
@@ -34,3 +34,11 @@ redis-cli:
 reset-db:
 	docker compose down -v
 	docker compose up -d postgres redis
+
+# Run the background job worker (reviews -> dishes -> embeddings).
+worker:
+	cd backend && .venv/bin/python -m app.worker
+
+# Enqueue catch-up jobs for restaurants missing embeddings/dishes.
+backfill:
+	cd backend && .venv/bin/python -m app.worker backfill

@@ -1,10 +1,10 @@
 import json
 import logging
-import time
 
 from app.config import get_settings
-from app.llm import get_anthropic_client
+from app.llm import get_anthropic_client, logged_messages_create
 from app.schemas.search import ParsedFilters
+from app.services.llm_json import strip_markdown_fences
 
 logger = logging.getLogger(__name__)
 
@@ -21,15 +21,6 @@ Return ONLY a JSON object with these keys (omit any that don't apply, do not inv
 Reply with the JSON only, no prose, no markdown fences."""
 
 
-def _strip_markdown_fences(text: str) -> str:
-    s = text.strip()
-    if s.startswith("```"):
-        s = s.split("\n", 1)[1] if "\n" in s else s[3:]
-    if s.endswith("```"):
-        s = s[:-3].rstrip()
-    return s
-
-
 async def parse_query(query: str) -> ParsedFilters:
     client = get_anthropic_client()
     if client is None:
@@ -37,9 +28,10 @@ async def parse_query(query: str) -> ParsedFilters:
         return ParsedFilters()
 
     settings = get_settings()
-    started = time.perf_counter()
     try:
-        response = await client.messages.create(
+        response = await logged_messages_create(
+            client,
+            "parse_query",
             model=settings.anthropic_model,
             max_tokens=512,
             system=_PARSE_SYSTEM_PROMPT,
@@ -49,19 +41,16 @@ async def parse_query(query: str) -> ParsedFilters:
         logger.warning("parse_query: anthropic call failed: %s", exc)
         return ParsedFilters()
 
-    latency_ms = int((time.perf_counter() - started) * 1000)
     raw = response.content[0].text if response.content else ""
     try:
-        data = json.loads(_strip_markdown_fences(raw))
+        data = json.loads(strip_markdown_fences(raw))
         parsed = ParsedFilters.model_validate(data)
     except Exception as exc:  # noqa: BLE001 — soft-fail on bad LLM output
         logger.warning("parse_query: invalid JSON from model (%s): %r", exc, raw[:200])
         return ParsedFilters()
 
     logger.info(
-        "parse_query ok model=%s latency_ms=%d query=%r parsed=%s",
-        settings.anthropic_model,
-        latency_ms,
+        "parse_query ok query=%r parsed=%s",
         query,
         parsed.model_dump(exclude_none=True),
     )

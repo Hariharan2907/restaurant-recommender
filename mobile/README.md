@@ -1,6 +1,7 @@
-# Restaurant Recommender — Mobile
+# Fork — Mobile
 
-Expo (React Native + TypeScript) app for the Restaurant Recommender. Phase 1: tab scaffolding plus a backend health check.
+Expo (React Native + TypeScript) app. Search / For you / Discover modes,
+Supabase auth, visit logging, and a live profile with editable preferences.
 
 ## Prerequisites
 
@@ -8,42 +9,32 @@ Expo (React Native + TypeScript) app for the Restaurant Recommender. Phase 1: ta
 - For iOS: Xcode (macOS) and a simulator, or the Expo Go app on a device
 - For Android: Android Studio + emulator, or Expo Go on a device
 
-## Install
+## Install & run
 
 ```bash
 cd mobile
 npm install
+cp .env.example .env   # set API + Supabase env vars
+npm start              # press i / a / w for iOS / Android / web
 ```
 
-## Run
+## Environment
 
-```bash
-npm start          # opens the Expo dev server (default port 8081)
-# then press:
-#   i  -> open iOS simulator
-#   a  -> open Android emulator
-#   w  -> open in web browser
-```
+| Variable | Purpose |
+|----------|---------|
+| `EXPO_PUBLIC_API_URL` | Backend base URL (default `http://localhost:8000`; use your LAN IP on a physical device) |
+| `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase Auth. Leave empty for a guest-only build — search still works; History/Profile show a sign-in prompt |
+| `EXPO_PUBLIC_POSTHOG_KEY` / `EXPO_PUBLIC_POSTHOG_HOST` | Optional analytics (events drop silently when unset) |
 
-Or jump straight to a platform:
+Only the Supabase **anon** key ships in the app. All Google/Anthropic/Yelp
+calls happen on the backend.
 
-```bash
-npm run ios
-npm run android
-npm run web
-```
+## Auth
 
-## Backend
-
-The app expects the FastAPI backend at `http://localhost:8000`. Start it before launching the app or the Search tab will show `Backend: unreachable`.
-
-`EXPO_PUBLIC_API_URL` overrides the base URL. It defaults to `http://localhost:8000`. Copy `.env.example` to `.env` to customize:
-
-```bash
-cp .env.example .env
-```
-
-Note: when running on a physical device, `localhost` resolves to the device itself. Use your machine's LAN IP (e.g. `EXPO_PUBLIC_API_URL=http://192.168.1.42:8000`).
+`lib/auth.tsx` provides an `AuthProvider` (session restore from AsyncStorage,
+auto token refresh tied to app focus) and `useAuth()`. `lib/api.ts` attaches
+the Supabase access token to every backend call, which unlocks
+personalization. Sign-in/up screens live under `app/auth/`.
 
 ## Typecheck
 
@@ -55,15 +46,19 @@ npm run typecheck
 
 ```
 app/
-  _layout.tsx           Root Stack
+  _layout.tsx           Root stack + AuthProvider
   (tabs)/
-    _layout.tsx         Tab navigator (Search / History / Profile)
-    index.tsx           Search tab
-    history.tsx         History tab
-    profile.tsx         Profile tab
-  +not-found.tsx        404
-components/
-  HealthCheck.tsx       Pings backend /health and renders a status pill
+    index.tsx           Search / For you / Discover (mood + dietary chips)
+    history.tsx         Visit history (paginated, pull-to-refresh, delete)
+    profile.tsx         Live profile + editable preferences + manage account
+  auth/sign-in.tsx      Email/password sign-in (modal)
+  auth/sign-up.tsx      Account creation (modal)
+  log-visit.tsx         Log-a-visit form (modal, opened from a restaurant)
+  restaurant/[placeId]  Detail: photos, why-it-matches, popular dishes, log visit
+components/             ScreenLayout, Button, Chip, FormField, ResultsList, …
 lib/
-  api.ts                fetch wrapper around EXPO_PUBLIC_API_URL
+  api.ts                fetch wrapper (auth header, JSON helpers)
+  auth.tsx              Supabase auth context
+  supabase.ts           Supabase client (null when unconfigured)
+  search.ts visits.ts profile.ts recommendations.ts analytics.ts location.ts
 ```

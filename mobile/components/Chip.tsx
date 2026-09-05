@@ -1,5 +1,5 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
-import { colors, space, type } from '@/lib/theme';
+import { Pressable, StyleSheet, Text } from "react-native";
+import { colors, space, type } from "@/lib/theme";
 
 type Props = {
   label: string;
@@ -8,11 +8,17 @@ type Props = {
   disabled?: boolean;
 };
 
-export function Chip({ label, selected = false, onPress, disabled = false }: Props) {
+export function Chip({
+  label,
+  selected = false,
+  onPress,
+  disabled = false,
+}: Props) {
   return (
     <Pressable
       onPress={disabled ? undefined : onPress}
-      accessibilityRole="button"
+      disabled={disabled}
+      accessibilityRole={onPress ? "button" : undefined}
       accessibilityState={{ selected, disabled }}
       style={({ pressed }) => [
         styles.chip,
@@ -21,7 +27,9 @@ export function Chip({ label, selected = false, onPress, disabled = false }: Pro
         disabled && styles.chipDisabled,
       ]}
     >
-      <Text style={[styles.text, selected && styles.textSelected]}>{label}</Text>
+      <Text style={[styles.text, selected && styles.textSelected]}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -29,14 +37,16 @@ export function Chip({ label, selected = false, onPress, disabled = false }: Pro
 const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: space.md,
-    paddingVertical: 8,
+    paddingVertical: 11,
+    minHeight: 44,
+    justifyContent: "center",
     borderRadius: 999,
-    backgroundColor: colors.surfaceAlt,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.hairline,
   },
   chipSelected: {
-    backgroundColor: colors.accent,
+    backgroundColor: colors.accentSoft,
     borderColor: colors.accent,
   },
   chipPressed: {
@@ -50,6 +60,6 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   textSelected: {
-    color: colors.primaryText,
+    color: colors.accent,
   },
 });

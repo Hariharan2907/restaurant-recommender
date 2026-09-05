@@ -1,27 +1,28 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
   StyleSheet,
   Text,
-  View,
-} from 'react-native';
-import { router } from 'expo-router';
-import { Button } from '@/components/Button';
-import { FormField } from '@/components/FormField';
-import { ScreenLayout } from '@/components/ScreenLayout';
-import { useAuth } from '@/lib/auth';
-import { colors, space, type } from '@/lib/theme';
+} from "react-native";
+import { router } from "expo-router";
+import { Button } from "@/components/Button";
+import { FormField } from "@/components/FormField";
+import { Notice } from "@/components/Feedback";
+import { ScreenLayout } from "@/components/ScreenLayout";
+import { useAuth } from "@/lib/auth";
+import { colors, space, type } from "@/lib/theme";
 
 export default function SignInScreen() {
   const { signIn, configured } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const onSubmit = async () => {
+    if (busy || !configured || !email.trim() || !password) return;
     setBusy(true);
     setError(null);
     const err = await signIn(email.trim(), password);
@@ -34,15 +35,20 @@ export default function SignInScreen() {
   };
 
   return (
-    <ScreenLayout title="Welcome back" subtitle="Sign in to get recommendations tuned to your taste.">
+    <ScreenLayout
+      scroll
+      title="Welcome back"
+      subtitle="Sign in to get recommendations tuned to your taste."
+    >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.form}
       >
         {!configured && (
-          <Text style={styles.warning}>
-            Auth isn’t configured for this build (missing Supabase env vars).
-          </Text>
+          <Notice error>
+            Accounts are temporarily unavailable. You can still explore
+            restaurants as a guest.
+          </Notice>
         )}
         <FormField
           label="Email"
@@ -62,20 +68,22 @@ export default function SignInScreen() {
           autoComplete="password"
           onSubmitEditing={onSubmit}
         />
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <Notice error>{error}</Notice>}
         <Button
-          label={busy ? 'Signing in…' : 'Sign in'}
+          label={busy ? "Signing in…" : "Sign in"}
           loading={busy}
           disabled={!configured || !email.trim() || !password}
           onPress={onSubmit}
         />
         <Pressable
-          onPress={() => router.replace('/auth/sign-up')}
+          onPress={() => router.replace("/auth/sign-up")}
+          style={{ minHeight: 44, justifyContent: "center" }}
           accessibilityRole="link"
           hitSlop={8}
         >
           <Text style={styles.switchLink}>
-            New here? <Text style={styles.switchLinkAccent}>Create an account</Text>
+            New here?{" "}
+            <Text style={styles.switchLinkAccent}>Create an account</Text>
           </Text>
         </Pressable>
       </KeyboardAvoidingView>
@@ -85,24 +93,22 @@ export default function SignInScreen() {
 
 const styles = StyleSheet.create({
   form: {
-    gap: space.md,
-  },
-  warning: {
-    ...type.body,
-    color: colors.error,
-  },
-  error: {
-    ...type.body,
-    color: colors.error,
+    gap: space.lg,
+    width: "100%",
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    borderRadius: 20,
+    padding: 24,
   },
   switchLink: {
     ...type.body,
     color: colors.textMuted,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: space.sm,
   },
   switchLinkAccent: {
     color: colors.accent,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

@@ -1,6 +1,12 @@
-import { ReactNode } from 'react';
-import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
-import { colors, space, type } from '@/lib/theme';
+import { ReactNode } from "react";
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  TextInputProps,
+  View,
+} from "react-native";
+import { colors, space, type } from "@/lib/theme";
 
 type Props = TextInputProps & {
   label: string;
@@ -13,6 +19,7 @@ export function FormField({ label, trailing, style, ...inputProps }: Props) {
       <Text style={styles.label}>{label}</Text>
       <View style={styles.inputRow}>
         <TextInput
+          accessibilityLabel={label}
           placeholderTextColor={colors.textFaint}
           style={[styles.input, style]}
           {...inputProps}
@@ -32,14 +39,18 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.hairline,
     borderRadius: 12,
   },
   input: {
     ...type.input,
     flex: 1,
+    minWidth: 0,
+    minHeight: 50,
     color: colors.text,
     paddingHorizontal: space.md,
     paddingVertical: 14,

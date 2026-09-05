@@ -1,27 +1,27 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { router, useFocusEffect } from "expo-router";
+import { EmptyState, Notice, ResultsSkeleton } from "@/components/Feedback";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Button } from "@/components/Button";
+import { Chip } from "@/components/Chip";
+import { FormField } from "@/components/FormField";
+import { ScreenLayout } from "@/components/ScreenLayout";
+import { useAuth } from "@/lib/auth";
 import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
-import { Button } from '@/components/Button';
-import { Chip } from '@/components/Chip';
-import { FormField } from '@/components/FormField';
-import { ScreenLayout } from '@/components/ScreenLayout';
-import { useAuth } from '@/lib/auth';
-import { deleteAccount, getMe, updateMe, type UserProfile } from '@/lib/profile';
-import { colors, space, type } from '@/lib/theme';
+  deleteAccount,
+  getMe,
+  updateMe,
+  type UserProfile,
+} from "@/lib/profile";
+import { colors, space, type } from "@/lib/theme";
 
-const DIETARY_OPTIONS = ['vegetarian', 'vegan', 'gluten_free'] as const;
+const DIETARY_OPTIONS = ["vegetarian", "vegan", "gluten_free"] as const;
 const RADIUS_OPTIONS = [
-  { label: '1 km', value: 1000 },
-  { label: '3 km', value: 3000 },
-  { label: '5 km', value: 5000 },
-  { label: '10 km', value: 10000 },
+  { label: "1 km", value: 1000 },
+  { label: "3 km", value: 3000 },
+  { label: "5 km", value: 5000 },
+  { label: "10 km", value: 10000 },
 ];
 
 export default function ProfileScreen() {
@@ -30,29 +30,42 @@ export default function ProfileScreen() {
   if (!session) {
     return (
       <ScreenLayout
-        title="Profile"
-        subtitle="Your taste profile gets sharper the more you visit."
+        scroll
+        title="A taste for the good things"
+        subtitle="Your favorites, your preferences, your kind of place."
       >
-        <View style={styles.guestWrap}>
-          <Text style={styles.guestHeadline}>
-            {configured ? 'You’re browsing as a guest' : 'Auth not configured'}
-          </Text>
-          <Text style={styles.guestBody}>
-            {configured
-              ? 'Sign in to log visits, train your taste profile, and get personalized picks.'
-              : 'Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to enable accounts.'}
-          </Text>
-          {configured && !authLoading && (
-            <View style={styles.guestButtons}>
-              <Button label="Sign in" onPress={() => router.push('/auth/sign-in')} />
-              <Button
-                label="Create account"
-                variant="secondary"
-                onPress={() => router.push('/auth/sign-up')}
-              />
-            </View>
-          )}
-        </View>
+        {authLoading ? (
+          <ResultsSkeleton />
+        ) : (
+          <EmptyState
+            icon="finger-print-outline"
+            title="Good taste. Uniquely yours."
+            description={
+              configured
+                ? "Tell us what you love, keep track of memorable meals, and discover more places that feel like you."
+                : "Personal taste profiles will be available when accounts are enabled. You can still find a great place to eat."
+            }
+          >
+            {configured && (
+              <>
+                <Button
+                  label="Sign in"
+                  onPress={() => router.push("/auth/sign-in")}
+                />
+                <Button
+                  label="Create your taste profile"
+                  variant="secondary"
+                  onPress={() => router.push("/auth/sign-up")}
+                />
+              </>
+            )}
+            <Button
+              label="Keep exploring"
+              variant="secondary"
+              onPress={() => router.navigate("/")}
+            />
+          </EmptyState>
+        )}
       </ScreenLayout>
     );
   }
@@ -64,13 +77,17 @@ function SignedInProfile({ onSignOut }: { onSignOut: () => Promise<void> }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Draft form state
-  const [displayName, setDisplayName] = useState('');
+  const [displayName, setDisplayName] = useState("");
   const [dietary, setDietary] = useState<string[]>([]);
   const [radius, setRadius] = useState(3000);
-  const [likes, setLikes] = useState('');
-  const [dislikes, setDislikes] = useState('');
+  const [likes, setLikes] = useState("");
+  const [dislikes, setDislikes] = useState("");
 
   const load = useCallback(() => {
     let cancelled = false;
@@ -78,16 +95,16 @@ function SignedInProfile({ onSignOut }: { onSignOut: () => Promise<void> }) {
       .then((p) => {
         if (cancelled) return;
         setProfile(p);
-        setDisplayName(p.display_name ?? '');
+        setDisplayName(p.display_name ?? "");
         setDietary(p.dietary_preferences);
         setRadius(p.default_radius_m);
-        setLikes(p.cuisine_likes.join(', '));
-        setDislikes(p.cuisine_dislikes.join(', '));
+        setLikes(p.cuisine_likes.join(", "));
+        setDislikes(p.cuisine_dislikes.join(", "));
         setError(null);
       })
       .catch((e) => {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : 'Failed to load profile');
+          setError(e instanceof Error ? e.message : "Failed to load profile");
         }
       });
     return () => {
@@ -107,12 +124,14 @@ function SignedInProfile({ onSignOut }: { onSignOut: () => Promise<void> }) {
 
   const parseCsv = (value: string) =>
     value
-      .split(',')
+      .split(",")
       .map((s) => s.trim().toLowerCase())
       .filter(Boolean);
 
   const onSave = async () => {
+    if (saving) return;
     setSaving(true);
+    setSaved(false);
     setError(null);
     try {
       const updated = await updateMe({
@@ -123,64 +142,66 @@ function SignedInProfile({ onSignOut }: { onSignOut: () => Promise<void> }) {
         cuisine_dislikes: parseCsv(dislikes),
       });
       setProfile(updated);
+      setSaved(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to save');
+      setError(e instanceof Error ? e.message : "Failed to save");
     } finally {
       setSaving(false);
     }
   };
 
-  const onDeleteAccount = () => {
-    Alert.alert(
-      'Delete account?',
-      'This permanently removes your profile and visit history.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteAccount();
-              await onSignOut();
-            } catch (e) {
-              setError(e instanceof Error ? e.message : 'Failed to delete account');
-            }
-          },
-        },
-      ],
-    );
+  const onDeleteAccount = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteAccount();
+      await onSignOut();
+      setConfirmDelete(false);
+    } catch {
+      setDeleteError("We couldn’t delete your account. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
     <ScreenLayout
-      title="Profile"
-      subtitle="Your taste profile gets sharper the more you visit."
+      scroll
+      title="Your taste, thoughtfully curated"
+      subtitle="A few small details make for much better recommendations."
     >
       {profile === null ? (
         error ? (
-          <Text style={styles.error}>{error}</Text>
+          <Notice error>{error}</Notice>
         ) : (
-          <ActivityIndicator style={{ marginTop: space.xl }} color={colors.accent} />
+          <ResultsSkeleton />
         )
       ) : (
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={styles.scroll}>
           <View style={styles.rows}>
             <InfoRow
               label="Signed in as"
               value={profile.display_name || profile.email}
+              first
             />
-            <InfoRow label="Visits logged" value={String(profile.visits_count)} />
+            <InfoRow
+              label="Visits logged"
+              value={String(profile.visits_count)}
+            />
             <InfoRow
               label="Taste profile"
-              value={profile.taste_profile_trained ? 'Trained' : 'Not yet trained'}
+              value={
+                profile.taste_profile_trained
+                  ? "Learning from your visits"
+                  : "Ready for your first visits"
+              }
             />
           </View>
 
-          <Text style={styles.sectionTitle}>Preferences</Text>
+          <Text accessibilityRole="header" style={styles.sectionTitle}>
+            What makes a great meal?
+          </Text>
           <FormField
             label="Display name"
             value={displayName}
@@ -189,12 +210,12 @@ function SignedInProfile({ onSignOut }: { onSignOut: () => Promise<void> }) {
           />
 
           <View style={styles.chipSection}>
-            <Text style={styles.chipLabel}>Dietary</Text>
+            <Text style={styles.chipLabel}>Dietary requests</Text>
             <View style={styles.chipRow}>
               {DIETARY_OPTIONS.map((option) => (
                 <Chip
                   key={option}
-                  label={option.replace('_', '-')}
+                  label={option.replace("_", "-")}
                   selected={dietary.includes(option)}
                   onPress={() => toggleDietary(option)}
                 />
@@ -231,9 +252,14 @@ function SignedInProfile({ onSignOut }: { onSignOut: () => Promise<void> }) {
             autoCapitalize="none"
           />
 
-          {error && <Text style={styles.error}>{error}</Text>}
+          {error && <Notice error>{error}</Notice>}
+          {saved && (
+            <Notice>
+              Your preferences are saved. Here’s to your next great meal.
+            </Notice>
+          )}
           <Button
-            label={saving ? 'Saving…' : 'Save preferences'}
+            label={saving ? "Saving…" : "Save preferences"}
             loading={saving}
             onPress={onSave}
           />
@@ -243,23 +269,50 @@ function SignedInProfile({ onSignOut }: { onSignOut: () => Promise<void> }) {
             <Button
               label="Sign out"
               variant="secondary"
-              onPress={() => void onSignOut()}
+              onPress={() => {
+                void onSignOut().catch(() =>
+                  setError("We couldn’t sign you out. Please try again."),
+                );
+              }}
             />
             <Button
               label="Delete account"
               variant="secondary"
-              onPress={onDeleteAccount}
+              onPress={() => {
+                setDeleteError(null);
+                setConfirmDelete(true);
+              }}
             />
           </View>
-        </ScrollView>
+        </View>
       )}
+      <ConfirmDialog
+        visible={confirmDelete}
+        title="Delete your account?"
+        description="This permanently removes your profile, preferences, and visit history. This action cannot be undone."
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={onDeleteAccount}
+        busy={deleting}
+        error={deleteError}
+        confirmLabel="Delete account"
+        busyLabel="Deleting…"
+        cancelLabel="Keep my account"
+      />
     </ScreenLayout>
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function InfoRow({
+  label,
+  value,
+  first = false,
+}: {
+  label: string;
+  value: string;
+  first?: boolean;
+}) {
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, first && styles.rowFirst]}>
       <Text style={styles.rowLabel}>{label}</Text>
       <Text style={styles.rowValue}>{value}</Text>
     </View>
@@ -273,14 +326,23 @@ const styles = StyleSheet.create({
   },
   rows: {
     marginBottom: space.sm,
+    padding: 20,
+    borderRadius: 18,
+    backgroundColor: colors.accentSoft,
   },
   row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 20,
+    flexWrap: "wrap",
     paddingVertical: space.md,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.hairline,
+  },
+  rowFirst: {
+    borderTopWidth: 0,
+    paddingTop: 0,
   },
   rowLabel: {
     ...type.label,
@@ -288,13 +350,14 @@ const styles = StyleSheet.create({
   },
   rowValue: {
     ...type.body,
+    flexShrink: 1,
     color: colors.text,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   sectionTitle: {
-    ...type.label,
-    color: colors.textMuted,
-    marginTop: space.sm,
+    ...type.heading,
+    color: colors.text,
+    marginTop: space.lg,
   },
   chipSection: {
     gap: space.xs,
@@ -304,36 +367,11 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: space.xs,
   },
   accountButtons: {
     gap: space.sm,
-  },
-  error: {
-    ...type.body,
-    color: colors.error,
-  },
-  guestWrap: {
-    marginTop: space.xl,
-    gap: space.sm,
-    alignItems: 'center',
-  },
-  guestHeadline: {
-    ...type.body,
-    color: colors.text,
-    fontWeight: '600',
-  },
-  guestBody: {
-    ...type.body,
-    color: colors.textMuted,
-    maxWidth: 320,
-    textAlign: 'center',
-  },
-  guestButtons: {
-    alignSelf: 'stretch',
-    gap: space.sm,
-    marginTop: space.md,
   },
 });

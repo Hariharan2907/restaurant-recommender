@@ -1,23 +1,22 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from "react";
 import {
-  Dimensions,
-  FlatList,
-  Image,
   Linking,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { Button } from '@/components/Button';
-import { useAuth } from '@/lib/auth';
-import { getDishes, type Dish } from '@/lib/recommendations';
-import { colors, space, type } from '@/lib/theme';
-import { photoUrl } from '@/lib/photos';
+  useWindowDimensions,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { router, useLocalSearchParams } from "expo-router";
+import { Button } from "@/components/Button";
+import { ScreenLayout } from "@/components/ScreenLayout";
+import { RestaurantPhoto } from "@/components/RestaurantPhoto";
+import { Notice } from "@/components/Feedback";
+import { useAuth } from "@/lib/auth";
+import { getDishes, type Dish } from "@/lib/recommendations";
+import { colors, type } from "@/lib/theme";
+import { formatDistance } from "@/lib/discovery";
 
 type ParamShape = {
   placeId: string;
@@ -31,282 +30,360 @@ type ParamShape = {
   lng: string;
   photoRefs: string;
   explanation: string;
+  distance: string;
 };
-
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const PHOTO_HEIGHT = 240;
-
 export default function RestaurantDetail() {
   const params = useLocalSearchParams<ParamShape>();
   const { session } = useAuth();
+  const { width } = useWindowDimensions();
+  const compact = width < 800;
   const [dishes, setDishes] = useState<Dish[]>([]);
-
-  const name = params.name ?? '';
-  const placeId = params.placeId ?? '';
+  const [dishState, setDishState] = useState<"loading" | "ready" | "error">(
+    "loading",
+  );
+  const [photoIndex, setPhotoIndex] = useState(0);
+  const [linkError, setLinkError] = useState(false);
+  const name = params.name || "Restaurant details";
   const rating = params.rating ? Number(params.rating) : null;
-  const ratingsCount = params.userRatingsTotal ? Number(params.userRatingsTotal) : null;
+  const ratingsCount = params.userRatingsTotal
+    ? Number(params.userRatingsTotal)
+    : null;
   const priceTier = params.priceTier ? Number(params.priceTier) : null;
-  const cuisine = params.cuisine || null;
-  const address = params.address || null;
-  const explanation = params.explanation || null;
-
   const photoRefs = useMemo<string[]>(() => {
     try {
-      const parsed = params.photoRefs ? JSON.parse(params.photoRefs) : [];
-      return Array.isArray(parsed) ? parsed.filter((s) => typeof s === 'string') : [];
+      const parsed: unknown = JSON.parse(params.photoRefs || "[]");
+      return Array.isArray(parsed)
+        ? parsed.filter((s): s is string => typeof s === "string")
+        : [];
     } catch {
       return [];
     }
   }, [params.photoRefs]);
-
   useEffect(() => {
-    if (!placeId) return;
     let cancelled = false;
-    getDishes(placeId)
+    setDishState("loading");
+    setDishes([]);
+    setPhotoIndex(0);
+    getDishes(params.placeId)
       .then((r) => {
-        if (!cancelled) setDishes(r.dishes);
+        if (!cancelled) {
+          setDishes(r.dishes);
+          setDishState("ready");
+        }
       })
       .catch(() => {
-        // dishes are progressive enhancement — ignore failures
+        if (!cancelled) setDishState("error");
       });
     return () => {
       cancelled = true;
     };
-  }, [placeId]);
-
+  }, [params.placeId]);
   const onLogVisit = () => {
     if (!session) {
-      router.push('/auth/sign-in');
+      router.push("/auth/sign-in");
       return;
     }
     router.push({
-      pathname: '/log-visit',
+      pathname: "/log-visit",
       params: {
-        placeId,
+        placeId: params.placeId,
         name,
-        lat: params.lat ?? '',
-        lng: params.lng ?? '',
-        cuisine: params.cuisine ?? '',
+        lat: params.lat ?? "",
+        lng: params.lng ?? "",
+        cuisine: params.cuisine ?? "",
       },
     });
   };
-
-  const openInMaps = () => {
-    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-      name,
-    )}&query_place_id=${encodeURIComponent(placeId)}`;
-    void Linking.openURL(url);
+  const openInMaps = async () => {
+    setLinkError(false);
+    try {
+      await Linking.openURL(
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(params.name || params.placeId)}&query_place_id=${encodeURIComponent(params.placeId)}`,
+      );
+    } catch {
+      setLinkError(true);
+    }
   };
-
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={styles.root}>
-      <Stack.Screen options={{ headerShown: false }} />
-
-      <View style={styles.chrome}>
-        <Pressable
-          onPress={() => router.back()}
-          hitSlop={12}
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-          style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}
-        >
-          <Ionicons name="chevron-back" size={26} color={colors.text} />
-        </Pressable>
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scroll}>
-        {photoRefs.length > 0 ? (
-          <FlatList
-            data={photoRefs}
-            keyExtractor={(ref) => ref}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <Image
-                source={{ uri: photoUrl(item, 1200) }}
-                style={styles.photo}
-                resizeMode="cover"
-              />
-            )}
-            style={styles.photoList}
-          />
-        ) : (
-          <View style={[styles.photo, styles.photoPlaceholder]}>
-            <Ionicons name="restaurant" size={56} color={colors.textFaint} />
+    <ScreenLayout wide scroll>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Back to restaurants"
+        onPress={() =>
+          router.canGoBack() ? router.back() : router.replace("/")
+        }
+        style={styles.back}
+      >
+        <Ionicons name="arrow-back" size={19} color={colors.accent} />
+        <Text style={styles.link}>Back to discovering</Text>
+      </Pressable>
+      <View style={styles.hero}>
+        <RestaurantPhoto
+          photoRef={photoRefs[photoIndex]}
+          name={name}
+          height={compact ? 250 : 380}
+          width={1200}
+        />
+        {photoRefs.length > 1 && (
+          <View style={styles.photoControls}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Previous photo"
+              onPress={() =>
+                setPhotoIndex(
+                  (i) => (i - 1 + photoRefs.length) % photoRefs.length,
+                )
+              }
+              style={styles.photoButton}
+            >
+              <Ionicons name="chevron-back" size={20} color={colors.text} />
+            </Pressable>
+            <Text accessibilityLiveRegion="polite" style={styles.photoCount}>
+              {photoIndex + 1} / {photoRefs.length}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Next photo"
+              onPress={() => setPhotoIndex((i) => (i + 1) % photoRefs.length)}
+              style={styles.photoButton}
+            >
+              <Ionicons name="chevron-forward" size={20} color={colors.text} />
+            </Pressable>
           </View>
         )}
-
-        <View style={styles.body}>
-          <Text style={styles.name}>{name}</Text>
-
+      </View>
+      <View style={[styles.columns, compact && { flexDirection: "column" }]}>
+        <View style={styles.main}>
+          <Text style={styles.eyebrow}>
+            {params.cuisine || "YOUR NEXT TABLE"}
+          </Text>
+          <Text accessibilityRole="header" style={styles.name}>
+            {name}
+          </Text>
           <View style={styles.metaRow}>
-            {rating != null && !Number.isNaN(rating) && (
+            {rating != null && Number.isFinite(rating) && (
+              <>
+                <Ionicons name="star" size={15} color={colors.accent} />
+                <Text style={styles.meta}>
+                  {rating.toFixed(1)}
+                  {ratingsCount != null && Number.isFinite(ratingsCount)
+                    ? ` (${ratingsCount.toLocaleString()} reviews)`
+                    : ""}
+                </Text>
+              </>
+            )}
+            {priceTier != null && Number.isFinite(priceTier) && (
               <Text style={styles.meta}>
-                {rating.toFixed(1)}★
-                {ratingsCount != null && !Number.isNaN(ratingsCount) && (
-                  <Text style={styles.metaFaint}> ({ratingsCount.toLocaleString()})</Text>
-                )}
+                {"$".repeat(Math.max(0, Math.min(4, priceTier))) || "Free"}
               </Text>
             )}
-            {priceTier != null && !Number.isNaN(priceTier) && (
-              <Text style={styles.meta}>{'$'.repeat(priceTier)}</Text>
+            {params.distance && (
+              <Text style={styles.meta}>
+                {formatDistance(Number(params.distance))} away
+              </Text>
             )}
-            {cuisine && <Text style={styles.meta}>{cuisine}</Text>}
           </View>
-
-          {address && <Text style={styles.address}>{address}</Text>}
-
-          {explanation && (
-            <View style={styles.reasonBox}>
-              <Text style={styles.reasonLabel}>Why it matches</Text>
-              <Text style={styles.reasonText}>{explanation}</Text>
+          {params.address && (
+            <Text style={styles.address}>{params.address}</Text>
+          )}
+          {params.explanation && (
+            <View style={styles.reason}>
+              <View style={styles.metaRow}>
+                <Ionicons
+                  name="sparkles-outline"
+                  size={19}
+                  color={colors.accent}
+                />
+                <Text style={styles.eyebrow}>WHY THIS MATCHES</Text>
+              </View>
+              <Text style={styles.reasonText}>{params.explanation}</Text>
             </View>
           )}
-
-          {dishes.length > 0 && (
-            <View style={styles.dishesBox}>
-              <Text style={styles.dishesLabel}>Popular dishes</Text>
-              {dishes.slice(0, 6).map((dish) => (
+          <View style={styles.section}>
+            <Text accessibilityRole="header" style={styles.sectionTitle}>
+              The dishes people talk about
+            </Text>
+            <Text style={styles.body}>
+              A little inspiration for your order, drawn from diner reviews.
+            </Text>
+            {dishState === "loading" ? (
+              <Text
+                accessibilityRole="progressbar"
+                accessibilityLabel="Loading popular dishes"
+                style={styles.body}
+              >
+                Looking up popular dishes…
+              </Text>
+            ) : dishes.length ? (
+              dishes.slice(0, 6).map((dish, index) => (
                 <View key={dish.dish_name} style={styles.dishRow}>
+                  <Text style={styles.dishNumber}>
+                    {String(index + 1).padStart(2, "0")}
+                  </Text>
                   <Text style={styles.dishName}>{dish.dish_name}</Text>
                   <Text style={styles.dishMeta}>
-                    {dish.mention_count} mention
-                    {dish.mention_count === 1 ? '' : 's'}
+                    {dish.mention_count}{" "}
+                    {dish.mention_count === 1 ? "mention" : "mentions"}
                   </Text>
                 </View>
-              ))}
+              ))
+            ) : (
+              <Notice>
+                {dishState === "error"
+                  ? "Popular dishes couldn’t be loaded right now. You can still explore this restaurant in Google Maps."
+                  : "No popular dishes have been collected yet. Check the restaurant’s current menu before you go."}
+              </Notice>
+            )}
+            {!!dishes.length && (
               <Text style={styles.attribution}>
                 Dish data derived from Google and Yelp reviews.
               </Text>
+            )}
+          </View>
+          <View style={styles.section}>
+            <Text accessibilityRole="header" style={styles.sectionTitle}>
+              Before you go
+            </Text>
+            <Text style={styles.body}>
+              For current hours, menus, contact information, and availability,
+              visit the restaurant’s Google Maps listing.
+            </Text>
+            <Text style={styles.body}>
+              Have a dietary need? Confirm ingredients and preparation directly
+              with the restaurant.
+            </Text>
+          </View>
+        </View>
+        <View style={[styles.sidebar, !compact && { width: 320 }]}>
+          <View style={styles.visitCard}>
+            <View style={styles.metaRow}>
+              <Ionicons
+                name="location-outline"
+                size={22}
+                color={colors.accent}
+              />
+              <Text style={styles.cardTitle}>Make a meal of it.</Text>
             </View>
-          )}
-
-          <View style={styles.actions}>
-            <Button label="Log a visit" onPress={onLogVisit} />
+            <Text style={styles.body}>
+              {params.address ||
+                "Find this restaurant and plan your visit in Google Maps."}
+            </Text>
+            <Button label="Get directions ↗" onPress={openInMaps} />
             <Button
-              label="Open in Google Maps"
+              label="Log a visit"
               variant="secondary"
-              onPress={openInMaps}
+              onPress={onLogVisit}
+            />
+            <Text style={styles.helper}>
+              Been here? Your rating helps us find more places you’ll love.
+            </Text>
+            {linkError && (
+              <Notice error>We couldn’t open Maps. Please try again.</Notice>
+            )}
+          </View>
+          <View style={styles.more}>
+            <Ionicons name="compass-outline" size={24} color={colors.accent} />
+            <Text style={styles.cardTitle}>There’s more to discover.</Text>
+            <Text style={styles.body}>
+              Keep exploring to find the right table for tonight.
+            </Text>
+            <Button
+              label="Explore more restaurants"
+              variant="secondary"
+              onPress={() => router.navigate("/")}
             />
           </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </ScreenLayout>
   );
 }
-
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
+  back: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+    minHeight: 44,
+    marginBottom: 16,
+    alignSelf: "flex-start",
+  },
+  link: { ...type.meta, color: colors.accent },
+  hero: { borderRadius: 22, overflow: "hidden" },
+  photoControls: {
+    position: "absolute",
+    bottom: 18,
+    right: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
     backgroundColor: colors.bg,
+    borderRadius: 30,
+    padding: 4,
   },
-  chrome: {
-    paddingHorizontal: space.lg,
-    paddingTop: space.sm,
-    paddingBottom: space.xs,
+  photoButton: {
+    width: 44,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  backBtn: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-  },
-  scroll: {
-    paddingBottom: space.xxl,
-  },
-  photoList: {
-    height: PHOTO_HEIGHT,
-  },
-  photo: {
-    width: SCREEN_WIDTH,
-    height: PHOTO_HEIGHT,
-    backgroundColor: colors.surface,
-  },
-  photoPlaceholder: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  body: {
-    paddingHorizontal: space.lg,
-    paddingTop: space.lg,
-    gap: space.md,
-  },
-  name: {
-    ...type.display,
-    color: colors.text,
-  },
+  photoCount: { ...type.meta, color: colors.text },
+  columns: { flexDirection: "row", gap: 40, marginTop: 32 },
+  main: { flex: 1, gap: 14, minWidth: 0 },
+  eyebrow: { ...type.label, color: colors.accent },
+  name: { ...type.display, color: colors.text },
   metaRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space.sm,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
   },
-  meta: {
-    ...type.meta,
-    color: colors.textMuted,
+  meta: { ...type.meta, color: colors.text },
+  address: { ...type.body, color: colors.textMuted },
+  reason: {
+    backgroundColor: colors.accentSoft,
+    padding: 24,
+    borderRadius: 16,
+    gap: 12,
+    marginTop: 12,
   },
-  metaFaint: {
-    ...type.meta,
-    color: colors.textFaint,
-    fontWeight: '400',
+  reasonText: { ...type.body, color: colors.accent },
+  section: {
+    borderTopWidth: 1,
+    borderTopColor: colors.hairline,
+    paddingTop: 24,
+    marginTop: 16,
+    gap: 12,
   },
-  address: {
-    ...type.body,
-    color: colors.textMuted,
-  },
-  reasonBox: {
-    marginTop: space.sm,
-    padding: space.md,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.accent,
-    gap: space.xs,
-  },
-  reasonLabel: {
-    ...type.label,
-    color: colors.accent,
-  },
-  reasonText: {
-    ...type.body,
-    color: colors.text,
-  },
-  actions: {
-    marginTop: space.md,
-    gap: space.sm,
-  },
-  dishesBox: {
-    marginTop: space.sm,
-    padding: space.md,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
-    gap: space.xs,
-  },
-  dishesLabel: {
-    ...type.label,
-    color: colors.textMuted,
-  },
+  sectionTitle: { ...type.heading, color: colors.text },
+  body: { ...type.body, color: colors.textMuted },
   dishRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    paddingVertical: 4,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    paddingVertical: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.hairline,
+    gap: 12,
   },
-  dishName: {
-    ...type.body,
-    color: colors.text,
-    fontWeight: '500',
+  dishNumber: { ...type.meta, color: colors.accent },
+  dishName: { ...type.body, flex: 1, minWidth: 100, color: colors.text },
+  dishMeta: { ...type.meta, color: colors.textMuted, fontSize: 11 },
+  attribution: { ...type.meta, color: colors.textMuted, fontSize: 11 },
+  sidebar: { gap: 24 },
+  visitCard: {
+    padding: 24,
+    gap: 16,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    borderRadius: 18,
+    backgroundColor: colors.surfaceAlt,
   },
-  dishMeta: {
-    ...type.meta,
-    color: colors.textFaint,
-    fontWeight: '400',
-  },
-  attribution: {
-    ...type.meta,
-    fontSize: 11,
-    color: colors.textFaint,
-    fontWeight: '400',
-    marginTop: space.xs,
+  cardTitle: { ...type.name, color: colors.text },
+  helper: { ...type.meta, fontWeight: "400", color: colors.textMuted },
+  more: {
+    gap: 14,
+    padding: 24,
+    backgroundColor: colors.surface,
+    borderRadius: 18,
   },
 });

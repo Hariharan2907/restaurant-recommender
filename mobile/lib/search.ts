@@ -1,5 +1,5 @@
-import { apiJson } from './api';
-import type { Coords } from './location';
+import { apiJson } from "./api";
+import type { Coords } from "./location";
 
 export type ParsedFilters = {
   cuisine: string | null;
@@ -33,8 +33,17 @@ export type SearchResponse = {
   cached: boolean;
 };
 
-export async function search(query: string, loc: Coords): Promise<SearchResponse> {
+export async function search(
+  query: string,
+  loc: Coords,
+  radius = 3000,
+): Promise<SearchResponse> {
   // apiJson attaches the Supabase bearer token when signed in, which lets the
   // backend reorder results against the user's taste profile.
-  return apiJson('/search', 'POST', { query, lat: loc.lat, lng: loc.lng });
+  return apiJson("/search", "POST", {
+    query,
+    lat: loc.lat,
+    lng: loc.lng,
+    radius_m: radius,
+  });
 }

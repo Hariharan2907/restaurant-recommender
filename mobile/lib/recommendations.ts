@@ -1,6 +1,6 @@
-import { apiFetch, apiJson } from '@/lib/api';
-import type { Coords } from '@/lib/location';
-import type { ParsedFilters, RestaurantResult } from '@/lib/search';
+import { apiFetch, apiJson } from "@/lib/api";
+import type { Coords } from "@/lib/location";
+import type { ParsedFilters, RestaurantResult } from "@/lib/search";
 
 export type RecommendationResult = RestaurantResult & {
   popular_dishes: string[];
@@ -17,12 +17,14 @@ export function recommend(
   query: string,
   loc: Coords,
   mood?: string,
+  radius?: number,
 ): Promise<RecommendationsResponse> {
-  return apiJson('/recommendations', 'POST', {
+  return apiJson("/recommendations", "POST", {
     query,
     lat: loc.lat,
     lng: loc.lng,
     ...(mood ? { mood } : {}),
+    ...(radius ? { radius_m: radius } : {}),
   });
 }
 

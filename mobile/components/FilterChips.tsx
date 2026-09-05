@@ -1,14 +1,16 @@
-import { StyleSheet, Text, View } from 'react-native';
-import { colors, space, type } from '@/lib/theme';
-import type { ParsedFilters } from '@/lib/search';
+import { StyleSheet, Text, View } from "react-native";
+import { colors, space, type } from "@/lib/theme";
+import type { ParsedFilters } from "@/lib/search";
 
 export function FilterChips({ filters }: { filters: ParsedFilters }) {
   const chips: string[] = [];
   if (filters.cuisine) chips.push(filters.cuisine);
-  if (filters.min_rating != null) chips.push(`${filters.min_rating.toFixed(1)}★`);
-  if (filters.price_max != null) chips.push('$'.repeat(filters.price_max));
+  if (filters.min_rating != null)
+    chips.push(`${filters.min_rating.toFixed(1)}★`);
+  if (filters.price_max != null) chips.push("$".repeat(filters.price_max));
   for (const tag of filters.vibe_tags) chips.push(tag);
-  for (const diet of filters.dietary) chips.push(diet);
+  for (const diet of filters.dietary)
+    chips.push(diet.replace(/_/g, "-"));
 
   if (chips.length === 0) return null;
 
@@ -25,10 +27,9 @@ export function FilterChips({ filters }: { filters: ParsedFilters }) {
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: space.xs,
-    marginTop: space.sm,
   },
   chip: {
     paddingHorizontal: space.sm,

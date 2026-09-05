@@ -1,24 +1,30 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
-import { Button } from '@/components/Button';
-import { Chip } from '@/components/Chip';
-import { FormField } from '@/components/FormField';
-import { ScreenLayout } from '@/components/ScreenLayout';
-import { capture } from '@/lib/analytics';
-import { colors, space, type } from '@/lib/theme';
-import { createVisit } from '@/lib/visits';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { router, useLocalSearchParams } from "expo-router";
+import { Button } from "@/components/Button";
+import { Chip } from "@/components/Chip";
+import { FormField } from "@/components/FormField";
+import { Notice } from "@/components/Feedback";
+import { ScreenLayout } from "@/components/ScreenLayout";
+import { capture } from "@/lib/analytics";
+import { colors, space, type } from "@/lib/theme";
+import { createVisit } from "@/lib/visits";
 
-const MOOD_OPTIONS = ['casual', 'date night', 'celebration', 'quick bite', 'healthy'];
+const MOOD_OPTIONS = [
+  "casual",
+  "date night",
+  "celebration",
+  "quick bite",
+  "healthy",
+];
 
 type ParamShape = {
   placeId: string;
@@ -32,17 +38,18 @@ export default function LogVisitScreen() {
   const params = useLocalSearchParams<ParamShape>();
   const [rating, setRating] = useState<number | null>(null);
   const [mood, setMood] = useState<string | null>(null);
-  const [dishes, setDishes] = useState('');
-  const [notes, setNotes] = useState('');
+  const [dishes, setDishes] = useState("");
+  const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const onSave = async () => {
+    if (busy || !params.placeId) return;
     setBusy(true);
     setError(null);
     try {
       await createVisit({
-        google_place_id: params.placeId ?? '',
+        google_place_id: params.placeId ?? "",
         restaurant_name: params.name || undefined,
         lat: params.lat ? Number(params.lat) : undefined,
         lng: params.lng ? Number(params.lng) : undefined,
@@ -50,33 +57,29 @@ export default function LogVisitScreen() {
         my_rating: rating ?? undefined,
         mood: mood ?? undefined,
         dishes_ordered: dishes
-          .split(',')
+          .split(",")
           .map((s) => s.trim())
           .filter(Boolean),
         notes: notes.trim() || undefined,
       });
-      capture('visit_logged', { rated: rating != null, mood });
+      capture("visit_logged", { rated: rating != null, mood });
       router.back();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to log visit');
+      setError(e instanceof Error ? e.message : "Failed to log visit");
       setBusy(false);
     }
   };
 
   return (
     <ScreenLayout
+      scroll
       title="Log a visit"
-      subtitle={params.name ? `How was ${params.name}?` : 'How was it?'}
+      subtitle={params.name ? `How was ${params.name}?` : "How was it?"}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <ScrollView
-          contentContainerStyle={styles.form}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={styles.form}>
           <View style={styles.section}>
             <Text style={styles.label}>Your rating</Text>
             <View style={styles.starRow}>
@@ -84,12 +87,23 @@ export default function LogVisitScreen() {
                 <Pressable
                   key={value}
                   onPress={() => setRating(value === rating ? null : value)}
+                  style={{
+                    minWidth: 44,
+                    minHeight: 44,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  accessibilityState={{ selected: rating === value }}
                   hitSlop={6}
                   accessibilityRole="button"
-                  accessibilityLabel={`${value} star${value > 1 ? 's' : ''}`}
+                  accessibilityLabel={`${value} star${value > 1 ? "s" : ""}`}
                 >
                   <Ionicons
-                    name={rating != null && value <= rating ? 'star' : 'star-outline'}
+                    name={
+                      rating != null && value <= rating
+                        ? "star"
+                        : "star-outline"
+                    }
                     size={32}
                     color={
                       rating != null && value <= rating
@@ -133,14 +147,19 @@ export default function LogVisitScreen() {
             style={styles.notesInput}
           />
 
-          {error && <Text style={styles.error}>{error}</Text>}
+          {error && <Notice error>{error}</Notice>}
           <Button
-            label={busy ? 'Saving…' : 'Save visit'}
+            label={busy ? "Saving…" : "Save visit"}
             loading={busy}
+            disabled={!params.placeId}
             onPress={onSave}
           />
-          <Button label="Cancel" variant="secondary" onPress={() => router.back()} />
-        </ScrollView>
+          <Button
+            label="Cancel"
+            variant="secondary"
+            onPress={() => router.back()}
+          />
+        </View>
       </KeyboardAvoidingView>
     </ScreenLayout>
   );
@@ -149,7 +168,12 @@ export default function LogVisitScreen() {
 const styles = StyleSheet.create({
   form: {
     gap: space.md,
-    paddingBottom: space.xl,
+    width: "100%",
+    padding: 24,
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    borderRadius: 20,
   },
   section: {
     gap: space.xs,
@@ -159,21 +183,18 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   starRow: {
-    flexDirection: 'row',
-    gap: space.sm,
+    flexDirection: "row",
+    gap: 4,
+    flexWrap: "wrap",
     marginTop: space.xs,
   },
   chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: space.xs,
   },
   notesInput: {
     minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  error: {
-    ...type.body,
-    color: colors.error,
+    textAlignVertical: "top",
   },
 });

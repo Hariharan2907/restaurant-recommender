@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { apiFetch } from '@/lib/api';
-import { colors, type } from '@/lib/theme';
+import { useEffect, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { apiFetch } from "@/lib/api";
+import { colors, type } from "@/lib/theme";
 
-type Status = 'loading' | 'ok' | 'error';
+type Status = "loading" | "ok" | "error";
 
 export function HealthCheck() {
   if (!__DEV__) return null;
@@ -11,16 +11,16 @@ export function HealthCheck() {
 }
 
 function HealthCheckInner() {
-  const [status, setStatus] = useState<Status>('loading');
+  const [status, setStatus] = useState<Status>("loading");
 
   useEffect(() => {
     let cancelled = false;
-    apiFetch('/health')
+    apiFetch("/health")
       .then(() => {
-        if (!cancelled) setStatus('ok');
+        if (!cancelled) setStatus("ok");
       })
       .catch(() => {
-        if (!cancelled) setStatus('error');
+        if (!cancelled) setStatus("error");
       });
     return () => {
       cancelled = true;
@@ -28,12 +28,12 @@ function HealthCheckInner() {
   }, []);
 
   const label =
-    status === 'loading' ? '•••' : status === 'ok' ? 'API · OK' : 'API · DOWN';
+    status === "loading" ? "•••" : status === "ok" ? "API · OK" : "API · DOWN";
 
   const dotColor =
-    status === 'ok'
+    status === "ok"
       ? colors.devChipOkBg
-      : status === 'error'
+      : status === "error"
         ? colors.devChipErrBg
         : colors.devChipLoadingBg;
 
@@ -47,8 +47,8 @@ function HealthCheckInner() {
 
 const styles = StyleSheet.create({
   chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 5,

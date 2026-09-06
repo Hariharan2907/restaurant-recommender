@@ -20,6 +20,7 @@ export function Chip({
       disabled={disabled}
       accessibilityRole={onPress ? "button" : undefined}
       accessibilityState={{ selected, disabled }}
+      aria-pressed={onPress ? selected : undefined}
       style={({ pressed }) => [
         styles.chip,
         selected && styles.chipSelected,

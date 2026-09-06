@@ -7,7 +7,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Icon as Ionicons } from "@/components/Icon";
 import { router, useLocalSearchParams } from "expo-router";
 import { Button } from "@/components/Button";
 import { Chip } from "@/components/Chip";
@@ -94,6 +94,7 @@ export default function LogVisitScreen() {
                     justifyContent: "center",
                   }}
                   accessibilityState={{ selected: rating === value }}
+                  aria-pressed={rating === value}
                   hitSlop={6}
                   accessibilityRole="button"
                   accessibilityLabel={`${value} star${value > 1 ? "s" : ""}`}
@@ -184,8 +185,7 @@ const styles = StyleSheet.create({
   },
   starRow: {
     flexDirection: "row",
-    gap: 4,
-    flexWrap: "wrap",
+    gap: 2,
     marginTop: space.xs,
   },
   chipRow: {

@@ -7,7 +7,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Icon as Ionicons } from "@/components/Icon";
 import { router, useFocusEffect } from "expo-router";
 import { Button } from "@/components/Button";
 import { ScreenLayout } from "@/components/ScreenLayout";

@@ -9,14 +9,13 @@ export function FilterChips({ filters }: { filters: ParsedFilters }) {
     chips.push(`${filters.min_rating.toFixed(1)}★`);
   if (filters.price_max != null) chips.push("$".repeat(filters.price_max));
   for (const tag of filters.vibe_tags) chips.push(tag);
-  for (const diet of filters.dietary)
-    chips.push(diet.replace(/_/g, "-"));
+  for (const diet of filters.dietary) chips.push(diet.replace(/_/g, "-"));
 
   if (chips.length === 0) return null;
 
   return (
     <View style={styles.row}>
-      {chips.map((label) => (
+      {[...new Set(chips)].map((label) => (
         <View key={label} style={styles.chip}>
           <Text style={styles.chipText}>{label}</Text>
         </View>

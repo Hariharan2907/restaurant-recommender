@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Icon as Ionicons } from "@/components/Icon";
 import { colors, type } from "@/lib/theme";
 
 export function EmptyState({
@@ -19,7 +19,7 @@ export function EmptyState({
       <View style={styles.icon}>
         <Ionicons name={icon} size={30} color={colors.accent} />
       </View>
-      <Text accessibilityRole="header" style={styles.title}>
+      <Text accessibilityRole="header" aria-level={2} style={styles.title}>
         {title}
       </Text>
       <Text style={styles.body}>{description}</Text>

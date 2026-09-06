@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Chip } from "./Chip";
 import { colors, type } from "@/lib/theme";
-import { SearchRefinements } from "@/lib/discovery";
+import { formatDistance, SearchRefinements } from "@/lib/discovery";
 
 export function SearchFilters({
   value,
@@ -85,7 +85,7 @@ export function SearchFilters({
         {[1000, 3000, 5000, 10000].map((r) => (
           <Chip
             key={r}
-            label={`${r / 1000} km`}
+            label={formatDistance(r)}
             selected={value.radius === r}
             onPress={() => update({ radius: r })}
           />

@@ -1,3 +1,4 @@
+import { useResponsiveDimensions } from "@/lib/useResponsiveDimensions";
 import { ReactNode } from "react";
 import {
   Modal,
@@ -6,9 +7,8 @@ import {
   StyleSheet,
   Text,
   View,
-  useWindowDimensions,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Icon as Ionicons } from "@/components/Icon";
 import { colors, type } from "@/lib/theme";
 
 export function Sheet({
@@ -24,7 +24,7 @@ export function Sheet({
   children: ReactNode;
   footer?: ReactNode;
 }) {
-  const { width } = useWindowDimensions();
+  const { width } = useResponsiveDimensions();
   return (
     <Modal
       accessibilityLabel={title}

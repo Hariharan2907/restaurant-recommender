@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { StyleSheet, Text, View } from "react-native";
+import { Icon as Ionicons } from "@/components/Icon";
 import { colors, type } from "@/lib/theme";
-import { photoUrl } from "@/lib/photos";
+import { PhotoImage } from "./PhotoImage";
 
 export function RestaurantPhoto({
   photoRef,
@@ -19,7 +19,7 @@ export function RestaurantPhoto({
   const loadFailed = !!photoRef && failed === photoRef;
   return (
     <View style={[styles.frame, { height }]}>
-      <View style={styles.fallback}>
+      <View aria-hidden={!!photoRef && !loadFailed} style={styles.fallback}>
         <View style={styles.plate}>
           <View style={styles.innerPlate}>
             <Ionicons
@@ -35,11 +35,10 @@ export function RestaurantPhoto({
         {loadFailed && <Text style={styles.note}>Photo unavailable</Text>}
       </View>
       {photoRef && failed !== photoRef && (
-        <Image
-          accessibilityLabel={`${name} restaurant photo`}
-          source={{ uri: photoUrl(photoRef, width) }}
-          style={StyleSheet.absoluteFill}
-          resizeMode="cover"
+        <PhotoImage
+          photoRef={photoRef}
+          name={name}
+          width={width}
           onError={() => setFailed(photoRef)}
         />
       )}

@@ -1,13 +1,7 @@
+import { useResponsiveDimensions } from "@/lib/useResponsiveDimensions";
 import { useEffect, useMemo, useState } from "react";
-import {
-  Linking,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { Icon as Ionicons } from "@/components/Icon";
 import { router, useLocalSearchParams } from "expo-router";
 import { Button } from "@/components/Button";
 import { ScreenLayout } from "@/components/ScreenLayout";
@@ -35,7 +29,7 @@ type ParamShape = {
 export default function RestaurantDetail() {
   const params = useLocalSearchParams<ParamShape>();
   const { session } = useAuth();
-  const { width } = useWindowDimensions();
+  const { width } = useResponsiveDimensions();
   const compact = width < 800;
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [dishState, setDishState] = useState<"loading" | "ready" | "error">(
@@ -104,6 +98,27 @@ export default function RestaurantDetail() {
       setLinkError(true);
     }
   };
+  const visitActions = (
+    <View style={styles.visitCard}>
+      <View style={styles.metaRow}>
+        <Ionicons name="location-outline" size={22} color={colors.accent} />
+        <Text style={styles.cardTitle}>Make a meal of it.</Text>
+      </View>
+      <Text style={styles.body}>
+        {params.address ||
+          "Find this restaurant and plan your visit in Google Maps."}
+      </Text>
+      <Button label="Get directions ↗" onPress={openInMaps} />
+      <Button label="Log a visit" variant="secondary" onPress={onLogVisit} />
+      <Text style={styles.helper}>
+        Been here? Your rating helps us find more places you’ll love.
+      </Text>
+      {linkError && (
+        <Notice error>We couldn’t open Maps. Please try again.</Notice>
+      )}
+    </View>
+  );
+
   return (
     <ScreenLayout wide scroll>
       <Pressable
@@ -179,7 +194,7 @@ export default function RestaurantDetail() {
             )}
             {params.distance && (
               <Text style={styles.meta}>
-                {formatDistance(Number(params.distance))} away
+                {formatDistance(Number(params.distance))} away · straight line
               </Text>
             )}
           </View>
@@ -199,8 +214,13 @@ export default function RestaurantDetail() {
               <Text style={styles.reasonText}>{params.explanation}</Text>
             </View>
           )}
+          {compact && visitActions}
           <View style={styles.section}>
-            <Text accessibilityRole="header" style={styles.sectionTitle}>
+            <Text
+              accessibilityRole="header"
+              aria-level={2}
+              style={styles.sectionTitle}
+            >
               The dishes people talk about
             </Text>
             <Text style={styles.body}>
@@ -241,7 +261,11 @@ export default function RestaurantDetail() {
             )}
           </View>
           <View style={styles.section}>
-            <Text accessibilityRole="header" style={styles.sectionTitle}>
+            <Text
+              accessibilityRole="header"
+              aria-level={2}
+              style={styles.sectionTitle}
+            >
               Before you go
             </Text>
             <Text style={styles.body}>
@@ -255,32 +279,7 @@ export default function RestaurantDetail() {
           </View>
         </View>
         <View style={[styles.sidebar, !compact && { width: 320 }]}>
-          <View style={styles.visitCard}>
-            <View style={styles.metaRow}>
-              <Ionicons
-                name="location-outline"
-                size={22}
-                color={colors.accent}
-              />
-              <Text style={styles.cardTitle}>Make a meal of it.</Text>
-            </View>
-            <Text style={styles.body}>
-              {params.address ||
-                "Find this restaurant and plan your visit in Google Maps."}
-            </Text>
-            <Button label="Get directions ↗" onPress={openInMaps} />
-            <Button
-              label="Log a visit"
-              variant="secondary"
-              onPress={onLogVisit}
-            />
-            <Text style={styles.helper}>
-              Been here? Your rating helps us find more places you’ll love.
-            </Text>
-            {linkError && (
-              <Notice error>We couldn’t open Maps. Please try again.</Notice>
-            )}
-          </View>
+          {!compact && visitActions}
           <View style={styles.more}>
             <Ionicons name="compass-outline" size={24} color={colors.accent} />
             <Text style={styles.cardTitle}>There’s more to discover.</Text>

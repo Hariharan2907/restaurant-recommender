@@ -1,12 +1,18 @@
-import { Ionicons } from "@expo/vector-icons";
+import {
+  useHydrated,
+  useResponsiveDimensions,
+} from "@/lib/useResponsiveDimensions";
+import { Icon as Ionicons } from "@/components/Icon";
 import { Tabs } from "expo-router";
-import { Platform, useWindowDimensions } from "react-native";
+import { Platform } from "react-native";
 import { colors } from "@/lib/theme";
 
 export default function TabsLayout() {
-  const { width } = useWindowDimensions();
+  const { width } = useResponsiveDimensions();
+  const hydrated = useHydrated();
   return (
     <Tabs
+      tabBar={width >= 800 || !hydrated ? () => null : undefined}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.tabActive,

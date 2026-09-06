@@ -16,13 +16,13 @@ import {
 } from "@/lib/profile";
 import { colors, space, type } from "@/lib/theme";
 
+import { formatDistance } from "@/lib/discovery";
+
 const DIETARY_OPTIONS = ["vegetarian", "vegan", "gluten_free"] as const;
-const RADIUS_OPTIONS = [
-  { label: "1 km", value: 1000 },
-  { label: "3 km", value: 3000 },
-  { label: "5 km", value: 5000 },
-  { label: "10 km", value: 10000 },
-];
+const RADIUS_OPTIONS = [1000, 3000, 5000, 10000].map((value) => ({
+  label: formatDistance(value),
+  value,
+}));
 
 export default function ProfileScreen() {
   const { session, loading: authLoading, signOut, configured } = useAuth();
@@ -104,7 +104,7 @@ function SignedInProfile({ onSignOut }: { onSignOut: () => Promise<void> }) {
       })
       .catch((e) => {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : "Failed to load profile");
+          setError("We couldn’t load your taste profile. Please try again.");
         }
       });
     return () => {
@@ -115,6 +115,7 @@ function SignedInProfile({ onSignOut }: { onSignOut: () => Promise<void> }) {
   useFocusEffect(load);
 
   const toggleDietary = (option: string) => {
+    setSaved(false);
     setDietary((current) =>
       current.includes(option)
         ? current.filter((d) => d !== option)
@@ -144,7 +145,7 @@ function SignedInProfile({ onSignOut }: { onSignOut: () => Promise<void> }) {
       setProfile(updated);
       setSaved(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to save");
+      setError("Your preferences couldn’t be saved. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -173,7 +174,16 @@ function SignedInProfile({ onSignOut }: { onSignOut: () => Promise<void> }) {
     >
       {profile === null ? (
         error ? (
-          <Notice error>{error}</Notice>
+          <View style={{ gap: 16 }}>
+            <Notice error>{error}</Notice>
+            <Button
+              label="Try again"
+              onPress={() => {
+                setError(null);
+                load();
+              }}
+            />
+          </View>
         ) : (
           <ResultsSkeleton />
         )
@@ -199,13 +209,20 @@ function SignedInProfile({ onSignOut }: { onSignOut: () => Promise<void> }) {
             />
           </View>
 
-          <Text accessibilityRole="header" style={styles.sectionTitle}>
+          <Text
+            accessibilityRole="header"
+            aria-level={2}
+            style={styles.sectionTitle}
+          >
             What makes a great meal?
           </Text>
           <FormField
             label="Display name"
             value={displayName}
-            onChangeText={setDisplayName}
+            onChangeText={(value) => {
+              setSaved(false);
+              setDisplayName(value);
+            }}
             placeholder="How should we greet you?"
           />
 
@@ -231,7 +248,10 @@ function SignedInProfile({ onSignOut }: { onSignOut: () => Promise<void> }) {
                   key={option.value}
                   label={option.label}
                   selected={radius === option.value}
-                  onPress={() => setRadius(option.value)}
+                  onPress={() => {
+                    setSaved(false);
+                    setRadius(option.value);
+                  }}
                 />
               ))}
             </View>
@@ -240,14 +260,20 @@ function SignedInProfile({ onSignOut }: { onSignOut: () => Promise<void> }) {
           <FormField
             label="Cuisines you love (comma-separated)"
             value={likes}
-            onChangeText={setLikes}
+            onChangeText={(value) => {
+              setSaved(false);
+              setLikes(value);
+            }}
             placeholder="thai, ramen, pizza"
             autoCapitalize="none"
           />
           <FormField
             label="Cuisines to avoid"
             value={dislikes}
-            onChangeText={setDislikes}
+            onChangeText={(value) => {
+              setSaved(false);
+              setDislikes(value);
+            }}
             placeholder="fast food"
             autoCapitalize="none"
           />

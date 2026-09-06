@@ -37,7 +37,36 @@ export function refinementCount(filters: SearchRefinements): number {
   );
 }
 export function formatDistance(meters: number): string {
-  return meters < 1000
-    ? `${Math.round(meters)} m`
-    : `${(meters / 1000).toFixed(1)} km`;
+  const miles = meters / 1609.344;
+  return miles > 0 && miles < 0.1 ? "<0.1 mi" : `${miles.toFixed(1)} mi`;
+}
+
+/** Straight-line distance for display only; never changes backend ranking. */
+export function distanceMeters(
+  from: { lat: number; lng: number },
+  to: { lat: number; lng: number },
+): number | null {
+  if (![from.lat, from.lng, to.lat, to.lng].every(Number.isFinite)) return null;
+  const radians = (degrees: number) => (degrees * Math.PI) / 180;
+  const a =
+    Math.sin(radians(to.lat - from.lat) / 2) ** 2 +
+    Math.cos(radians(from.lat)) *
+      Math.cos(radians(to.lat)) *
+      Math.sin(radians(to.lng - from.lng) / 2) ** 2;
+  return Math.round(
+    6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(Math.max(0, 1 - a))),
+  );
+}
+
+export function restaurantSummary(item: {
+  rating: number | null;
+  user_ratings_total: number | null;
+  cuisine: string | null;
+  price_tier: number | null;
+}): string {
+  if (item.rating != null)
+    return `Rated ${item.rating.toFixed(1)} out of 5${item.user_ratings_total != null ? ` from ${item.user_ratings_total.toLocaleString()} diner reviews` : " by diners"}.`;
+  if (item.cuisine)
+    return `A ${item.cuisine} option from your restaurant search. Explore the details before you choose.`;
+  return "Explore the restaurant details and current listing to decide if it’s right for you.";
 }

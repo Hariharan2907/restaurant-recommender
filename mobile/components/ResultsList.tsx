@@ -1,17 +1,12 @@
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { useResponsiveDimensions } from "@/lib/useResponsiveDimensions";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Icon as Ionicons } from "@/components/Icon";
 import { router } from "expo-router";
 import { colors, type } from "@/lib/theme";
 import { RestaurantPhoto } from "./RestaurantPhoto";
 import { EmptyState } from "./Feedback";
 import type { RestaurantResult } from "@/lib/search";
-import { formatDistance } from "@/lib/discovery";
+import { formatDistance, restaurantSummary } from "@/lib/discovery";
 
 export function ResultsList({
   results,
@@ -20,7 +15,7 @@ export function ResultsList({
   results: RestaurantResult[];
   onReset?: () => void;
 }) {
-  const { width } = useWindowDimensions();
+  const { width } = useResponsiveDimensions();
   const columns = width >= 1050 ? 3 : width >= 650 ? 2 : 1;
   if (!results.length)
     return (
@@ -133,7 +128,7 @@ function Card({ item, index }: { item: RestaurantResult; index: number }) {
             Try {item.popular_dishes.slice(0, 2).join(" or ")}
           </Text>
         )}
-        {item.explanation && (
+        {
           <View style={styles.reasonBox}>
             <View style={styles.metaRow}>
               <Ionicons
@@ -141,11 +136,15 @@ function Card({ item, index }: { item: RestaurantResult; index: number }) {
                 size={14}
                 color={colors.accent}
               />
-              <Text style={styles.reasonLabel}>WHY THIS MATCHES</Text>
+              <Text style={styles.reasonLabel}>
+                {item.explanation ? "WHY THIS MATCHES" : "WHY CONSIDER IT"}
+              </Text>
             </View>
-            <Text style={styles.reason}>{item.explanation}</Text>
+            <Text style={styles.reason}>
+              {item.explanation || restaurantSummary(item)}
+            </Text>
           </View>
-        )}
+        }
       </View>
     </Pressable>
   );

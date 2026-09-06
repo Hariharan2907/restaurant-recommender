@@ -1,3 +1,4 @@
+import Head from "expo-router/head";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { WebStyles } from "@/components/WebStyles";
@@ -6,6 +7,9 @@ import { AuthProvider } from "@/lib/auth";
 export default function RootLayout() {
   return (
     <AuthProvider>
+      <Head>
+        <title>Fork — Find your next favorite</title>
+      </Head>
       <WebStyles />
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false }}>

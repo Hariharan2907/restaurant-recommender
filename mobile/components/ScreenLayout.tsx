@@ -1,14 +1,8 @@
+import { useResponsiveDimensions } from "@/lib/useResponsiveDimensions";
 import { ReactNode } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Icon as Ionicons } from "@/components/Icon";
 import { router, usePathname } from "expo-router";
 import { colors, serif, type } from "@/lib/theme";
 
@@ -29,7 +23,7 @@ export function ScreenLayout({
   wide = false,
   scroll = false,
 }: Props) {
-  const { width } = useWindowDimensions();
+  const { width } = useResponsiveDimensions();
   const compact = width < 600;
   const desktop = width >= 800;
   const path = usePathname();
@@ -63,7 +57,9 @@ export function ScreenLayout({
   );
   return (
     <SafeAreaView
-      edges={onTab ? ["top", "left", "right"] : ["top", "bottom", "left", "right"]}
+      edges={
+        onTab ? ["top", "left", "right"] : ["top", "bottom", "left", "right"]
+      }
       style={styles.root}
     >
       <View role="banner" style={styles.header}>
@@ -117,6 +113,7 @@ export function ScreenLayout({
                   key={item.href}
                   accessibilityRole="link"
                   accessibilityState={{ selected: path === item.href }}
+                  aria-current={path === item.href ? "page" : undefined}
                   onPress={() => router.navigate(item.href)}
                   style={[
                     styles.navLink,

@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useResponsiveDimensions } from "@/lib/useResponsiveDimensions";
+import { useEffect, useRef, useState } from "react";
 import {
   Image,
   Keyboard,
@@ -7,9 +8,8 @@ import {
   Text,
   TextInput,
   View,
-  useWindowDimensions,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Icon as Ionicons } from "@/components/Icon";
 import { router } from "expo-router";
 import { ScreenLayout } from "@/components/ScreenLayout";
 import { Button } from "@/components/Button";
@@ -27,6 +27,8 @@ import { discover, recommend } from "@/lib/recommendations";
 import { search, type SearchResponse } from "@/lib/search";
 import {
   buildQuery,
+  distanceMeters,
+  formatDistance,
   DEFAULT_REFINEMENTS,
   refinementCount,
   type SearchRefinements,
@@ -90,7 +92,7 @@ const IDEAS = [
 
 export default function SearchScreen() {
   const { session } = useAuth();
-  const { width } = useWindowDimensions();
+  const { width } = useResponsiveDimensions();
   const compact = width < 800;
   const [mode, setMode] = useState<Mode>("search");
   const [query, setQuery] = useState("");
@@ -110,6 +112,14 @@ export default function SearchScreen() {
   const [submitted, setSubmitted] = useState("");
   const inputRef = useRef<TextInput>(null);
   const requestId = useRef(0);
+  const locationRequestId = useRef(0);
+  useEffect(
+    () => () => {
+      requestId.current++;
+      locationRequestId.current++;
+    },
+    [],
+  );
   const filterCount = refinementCount(filters);
   const needsQuery = mode !== "discover";
   const effectiveQuery = buildQuery(query, filters);
@@ -126,9 +136,11 @@ export default function SearchScreen() {
     setMode(next);
   };
   const locate = async () => {
+    const id = ++locationRequestId.current;
     setLocating(true);
     setLocationError(null);
     const result = await getDeviceLocation();
+    if (id !== locationRequestId.current) return;
     setLocating(false);
     if (result.kind === "ok") {
       invalidate();
@@ -195,11 +207,16 @@ export default function SearchScreen() {
         isPersonalized = result.personalized;
       }
       if (id !== requestId.current) return;
-      setResponse(next);
+      setResponse({
+        ...next,
+        results: next.results.map((result) => ({
+          ...result,
+          distance_m: result.distance_m ?? distanceMeters(coords, result),
+        })),
+      });
       setPersonalized(isPersonalized);
       setSubmitted(query.trim() || "Your preferences");
-    } catch (cause) {
-      if (__DEV__) console.warn("Search preview:", cause instanceof Error ? cause.message : "Unknown failure");
+    } catch {
       if (id === requestId.current)
         setError(
           "We couldn’t load restaurants right now. Your search is still here — please try again in a moment.",
@@ -236,63 +253,71 @@ export default function SearchScreen() {
           <Ionicons name="chevron-down" size={13} color={colors.accent} />
         </Pressable>
       </View>
-      <View
-        style={[
-          styles.hero,
-          compact && { gap: 12, paddingTop: 8, paddingBottom: 16 },
-        ]}
-      >
-        <View style={styles.heroCopy}>
-          <Text
-            accessibilityRole="header"
-            style={[
-              styles.heroTitle,
-              compact && { fontSize: 32, lineHeight: 38 },
-            ]}
-          >
-            Good taste deserves{!compact ? "\n" : " "}a great table.
-          </Text>
-          <Text style={styles.heroSubtitle}>
-            From your everyday favorite to your next great find. Discover
-            restaurants that feel like you.
-          </Text>
-          {!compact && (
-            <View style={styles.heroNote}>
-              <View style={styles.smallIcon}>
-                <Ionicons
-                  name="restaurant-outline"
-                  size={17}
-                  color={colors.accent}
-                />
+      {!loading && !response && !error && (
+        <View
+          style={[
+            styles.hero,
+            compact && { gap: 12, paddingTop: 8, paddingBottom: 16 },
+          ]}
+        >
+          <View style={styles.heroCopy}>
+            <Text
+              accessibilityRole="header"
+              style={[
+                styles.heroTitle,
+                compact && { fontSize: 32, lineHeight: 38 },
+              ]}
+            >
+              Good taste deserves{!compact ? "\n" : " "}a great table.
+            </Text>
+            <Text style={styles.heroSubtitle}>
+              From your everyday favorite to your next great find. Discover
+              restaurants that feel like you.
+            </Text>
+            {!compact && (
+              <View style={styles.heroNote}>
+                <View style={styles.smallIcon}>
+                  <Ionicons
+                    name="restaurant-outline"
+                    size={17}
+                    color={colors.accent}
+                  />
+                </View>
+                <Text style={styles.heroNoteText}>
+                  Less searching. More savoring.
+                </Text>
               </View>
-              <Text style={styles.heroNoteText}>
-                Less searching. More savoring.
-              </Text>
+            )}
+          </View>
+          {!compact && (
+            <View style={styles.heroImageWrap}>
+              <Image
+                source={require("../../assets/dining-editorial.jpg")}
+                style={styles.heroImage}
+                accessibilityLabel="Editorial food inspiration: pasta, burrata, and fresh tomatoes on a bistro table"
+              />
+              <View style={styles.imageCaption}>
+                <Text style={styles.imageCaptionText}>
+                  THE JOY OF FINDING YOUR NEXT FAVORITE
+                </Text>
+              </View>
             </View>
           )}
         </View>
-        {!compact && (
-          <View style={styles.heroImageWrap}>
-            <Image
-              source={require("../../assets/dining-editorial.jpg")}
-              style={styles.heroImage}
-              accessibilityLabel="Editorial food inspiration: pasta, burrata, and fresh tomatoes on a bistro table"
-            />
-            <View style={styles.imageCaption}>
-              <Text style={styles.imageCaptionText}>
-                THE JOY OF FINDING YOUR NEXT FAVORITE
-              </Text>
-            </View>
-          </View>
-        )}
-      </View>
-      <View style={styles.searchPanel}>
+      )}
+      <View
+        style={[
+          styles.searchPanel,
+          (loading || response || error) && { marginTop: 16 },
+        ]}
+      >
         <View style={[styles.modes, compact && styles.modesCompact]}>
           {MODES.map((m) => (
             <Pressable
               key={m.key}
               accessibilityRole="button"
               accessibilityState={{ selected: mode === m.key }}
+              aria-pressed={mode === m.key}
               onPress={() => switchMode(m.key)}
               style={[
                 styles.mode,
@@ -455,7 +480,7 @@ export default function SearchScreen() {
                   onPress={openFilters}
                 />
                 <Chip
-                  label={`${filters.radius / 1000} km`}
+                  label={formatDistance(filters.radius)}
                   selected={filters.radius !== 3000}
                   onPress={openFilters}
                 />
@@ -494,6 +519,7 @@ export default function SearchScreen() {
             <Text
               accessibilityRole="header"
               accessibilityLiveRegion="polite"
+              aria-level={1}
               style={styles.sectionTitle}
             >
               Finding your kind of place…
@@ -509,7 +535,11 @@ export default function SearchScreen() {
                     ? "SELECTED FOR YOUR TASTE"
                     : "YOUR RESTAURANT SHORTLIST"}
                 </Text>
-                <Text accessibilityRole="header" style={styles.sectionTitle}>
+                <Text
+                  accessibilityRole="header"
+                  aria-level={1}
+                  style={styles.sectionTitle}
+                >
                   {mode === "discover"
                     ? "A fresh discovery"
                     : "A table worth finding"}
@@ -549,7 +579,11 @@ export default function SearchScreen() {
               <View style={styles.sectionHeader}>
                 <View style={{ gap: 5 }}>
                   <Text style={styles.eyebrow}>FOLLOW YOUR APPETITE</Text>
-                  <Text accessibilityRole="header" style={styles.sectionTitle}>
+                  <Text
+                    accessibilityRole="header"
+                    aria-level={2}
+                    style={styles.sectionTitle}
+                  >
                     A good place to start
                   </Text>
                 </View>
@@ -675,6 +709,8 @@ export default function SearchScreen() {
             accessibilityRole="button"
             onPress={() => {
               invalidate();
+              locationRequestId.current++;
+              setLocating(false);
               setCoords({ lat: a.lat, lng: a.lng });
               setArea(`${a.name} · ${a.detail}`);
               setLocationOpen(false);
